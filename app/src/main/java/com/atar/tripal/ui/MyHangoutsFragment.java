@@ -1,17 +1,14 @@
 package com.atar.tripal.ui;
 
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -30,12 +27,16 @@ import android.widget.Toast;
 import com.atar.tripal.R;
 import com.atar.tripal.adapters.MyHangoutsAdapter;
 import com.atar.tripal.callbacks.MyHangoutCallback;
+import com.atar.tripal.db.DBConstants;
 import com.atar.tripal.db.DBHandler;
 import com.atar.tripal.db.Details;
 import com.atar.tripal.net.ApiClient;
 import com.atar.tripal.net.ApiInterface;
-import com.atar.tripal.net.LocationDetectorService;
 import com.atar.tripal.net.NetConstants;
+import com.atar.tripal.net.RequestsService;
+import com.atar.tripal.net.SendingMessageService;
+import com.atar.tripal.objects.Hangouts;
+import com.atar.tripal.objects.Message;
 import com.atar.tripal.objects.User;
 import com.atar.tripal.objects.Hangout;
 import com.atar.tripal.objects.Result;
@@ -46,72 +47,80 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 
-/**
- * A simple {@link Fragment} subclass.
- */
+import static com.atar.tripal.net.NetConstants.HANGOUT_TIME;
+
 public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
 
-    private class HangoutsUpdaterReceiver extends BroadcastReceiver{
+    private class RequestsDetector extends BroadcastReceiver{
 
-        @SuppressWarnings("unchecked")
         @Override
         public void onReceive(Context context, Intent intent) {
-
-            if(intent.getIntExtra(LocationDetectorService.CODE, -1) ==
-                    LocationDetectorService.GET_MY_HANGOUTS){
-                switch(intent.getStringExtra(NetConstants.RESULT)){
-                    case NetConstants.RESULT_SUCCESS:
-                        int previousPast = mPastHangouts.size();
-                        mPastHangouts.clear();
-                        mPastAdapter.notifyItemRangeRemoved(0, previousPast);
-                        mPastHangouts.addAll((ArrayList<Hangout>) intent
-                                .getSerializableExtra("past_hangouts"));
-                        mPastAdapter.notifyDataSetChanged();
-
-                        int previousActive = mActiveHangouts.size();
-                        mActiveHangouts.clear();
-                        mActiveAdapter.notifyItemRangeRemoved(0, previousActive);
-                        mActiveHangouts.addAll((ArrayList<Hangout>) intent
-                                .getSerializableExtra("active_hangouts"));
-                        mActiveAdapter.notifyDataSetChanged();
-                        break;
-                    case NetConstants.RESULT_FAILED:
-                        int emptyActive = mActiveHangouts.size();
-                        mActiveHangouts.clear();
-                        mActiveAdapter.notifyItemRangeRemoved(0, emptyActive);
-                        int emptyPast = mPastHangouts.size();
-                        mPastHangouts.clear();
-                        mPastAdapter.notifyItemRangeRemoved(0, emptyPast);
-                        break;
-                }
-
+            String result = intent.getStringExtra(NetConstants.RESULT);
+            if(!result.equals(NetConstants.RESULT_FULL)){
+                final long hangoutId = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(int i = 0; i < mActiveHangouts.size(); i++){
+                            if(mActiveHangouts.get(i).getId() == hangoutId){
+                                refreshHangout(i, hangoutId);
+                                break;
+                            }
+                        }
+                    }
+                });
             }
-            mRefresh.setRefreshing(false);
-            arrangeMessages();
-
         }
     }
 
-    private View mView;
+    private class HangoutUpdater extends BroadcastReceiver{
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if(intent != null){
+                int typeOfMessage = intent.getIntExtra(DBConstants.COL_TYPE, -1);
+                if(typeOfMessage == Message.TYPE_JOINED || typeOfMessage == Message.TYPE_LEFT){
+                    final long hangoutId = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            for(int i = 0; i < mActiveHangouts.size(); i++){
+                                if(mActiveHangouts.get(i).getId() == hangoutId){
+                                    refreshHangout(i, hangoutId);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                }
 
-    private HangoutsUpdaterReceiver mReceiver;
+            }
+        }
+    }
+
+    /**
+     * Data
+     */
     private ApiInterface mInterface;
+    private List<Hangout> mPastHangouts, mActiveHangouts;
+    private DBHandler mHandler;
+
+    /**
+     * Broadcast Receivers
+     */
+    private HangoutUpdater mHangoutUpdaterReceiver;
+    private RequestsDetector mRequestsReceiver;
 
     /**
      * UI Widgets
      */
+    private View mView;
     private LinearLayout mNoHangoutsActive, mMyHangouts;
-    private TextView mNoHangoutsPast, mMsgTitle, mMsgSub;
+    private TextView mPastHangoutsLabel, mMsgTitle, mMsgSub;
     private MyHangoutsAdapter mPastAdapter, mActiveAdapter;
-    private List<Hangout> mPastHangouts, mActiveHangouts;
     private SwipeRefreshLayout mRefresh;
     private RecyclerView mActiveHangoutsList, mPastHangoutsList;
 
-    private DBHandler mHandler;
-
-    public MyHangoutsFragment() {
-        // Required empty public constructor
-    }
+    public MyHangoutsFragment() {}
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -147,16 +156,16 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
 
     @Override
     public void onStart() {
+        getMyHangouts();
         if(getContext() != null){
-            mReceiver = new HangoutsUpdaterReceiver();
+            mHangoutUpdaterReceiver = new HangoutUpdater();
             LocalBroadcastManager.getInstance(getContext()).registerReceiver
-                    (mReceiver, new IntentFilter(LocationDetectorService.BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
-        }
-        if(getActivity() != null && connectedToInternet()){
-            mRefresh.setRefreshing(true);
-            Intent intentService = new Intent(getActivity(), LocationDetectorService.class);
-            intentService.putExtra(LocationDetectorService.CODE, LocationDetectorService.GET_MY_HANGOUTS);
-            getActivity().startService(intentService);
+                    (mHangoutUpdaterReceiver, new IntentFilter
+                    (SendingMessageService.BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
+            mRequestsReceiver = new RequestsDetector();
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver
+                    (mRequestsReceiver, new IntentFilter
+                    (RequestsService.BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
         }
         super.onStart();
     }
@@ -164,7 +173,8 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
     @Override
     public void onStop() {
         if(getContext() != null){
-            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mHangoutUpdaterReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mRequestsReceiver);
         }
         super.onStop();
     }
@@ -238,17 +248,13 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
         mRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if(getActivity() != null && connectedToInternet()){
-                    Intent intentService = new Intent(getActivity(), LocationDetectorService.class);
-                    intentService.putExtra(LocationDetectorService.CODE, LocationDetectorService.GET_MY_HANGOUTS);
-                    getActivity().startService(intentService);
-                }
+                getMyHangouts();
             }
         });
 
         mMyHangouts = mView.findViewById(R.id.my_hangouts);
         mNoHangoutsActive = mView.findViewById(R.id.my_active_empty);
-        mNoHangoutsPast = mView.findViewById(R.id.my_past_empty);
+        mPastHangoutsLabel = mView.findViewById(R.id.my_past_label);
         mMsgTitle = mView.findViewById(R.id.my_msg_title);
         mMsgSub = mView.findViewById(R.id.my_msg_sub);
 
@@ -271,125 +277,76 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
     }
 
     private void arrangeMessages(){
+        mRefresh.setRefreshing(false);
+
         Animation animationIn = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
-        Animation animationOut = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
-        if(!connectedToInternet()){
-            if(mMyHangouts.isShown()){
-                mMyHangouts.setAnimation(animationOut);
-                mMyHangouts.setVisibility(View.GONE);
-            }
-            mMsgTitle.setText(R.string.we_are_sorry);
+
+        // If user has no hangouts at all the hangout lists will be hidden and a message wil appear
+        if(mActiveHangouts.size() == 0 && mPastHangouts.size() == 0){
+            mMyHangouts.setVisibility(View.GONE);
+            mMsgTitle.setText(R.string.no_hangouts_yet);
             if(!mMsgTitle.isShown()){
                 mMsgTitle.startAnimation(animationIn);
                 mMsgTitle.setVisibility(View.VISIBLE);
             }
-            mMsgSub.setText(R.string.no_connection);
+            mMsgSub.setText(R.string.start_hanging);
             if(!mMsgSub.isShown()){
                 mMsgSub.startAnimation(animationIn);
                 mMsgSub.setVisibility(View.VISIBLE);
             }
-        } else {
-            if(mActiveHangouts.size() == 0 && mPastHangouts.size() == 0){
-                if(mMyHangouts.isShown()){
-                    mMyHangouts.setAnimation(animationOut);
-                    mMyHangouts.setVisibility(View.GONE);
-                }
-                mMsgTitle.setText(R.string.no_hangouts_yet);
-                if(!mMsgTitle.isShown()){
-                    mMsgTitle.startAnimation(animationIn);
-                    mMsgTitle.setVisibility(View.VISIBLE);
-                }
-                mMsgSub.setText(R.string.start_hanging);
-                if(!mMsgSub.isShown()){
-                    mMsgSub.startAnimation(animationIn);
-                    mMsgSub.setVisibility(View.VISIBLE);
-                }
-            } else if(mActiveHangouts.size() == 0 && mPastHangouts.size() > 0) {
-                if(mMsgTitle.isShown()){
-                    mMsgTitle.startAnimation(animationOut);
-                    mMsgTitle.setVisibility(View.INVISIBLE);
-                }
-                if(mMsgSub.isShown()){
-                    mMsgSub.startAnimation(animationOut);
-                    mMsgSub.setVisibility(View.INVISIBLE);
-                }
-                if(!mMyHangouts.isShown()){
-                    mMyHangouts.setAnimation(animationIn);
-                    mMyHangouts.setVisibility(View.VISIBLE);
-                }
-                if(mNoHangoutsPast.isShown()){
-                    mNoHangoutsPast.setAnimation(animationOut);
-                    mNoHangoutsPast.setVisibility(View.GONE);
-                }
-                if(!mNoHangoutsActive.isShown()){
-                    mNoHangoutsActive.setAnimation(animationIn);
-                    mNoHangoutsActive.setVisibility(View.VISIBLE);
-                }
-            } else if(mPastHangouts.size() == 0 && mActiveHangouts.size() > 0) {
-                if(mMsgTitle.isShown()){
-                    mMsgTitle.startAnimation(animationOut);
-                    mMsgTitle.setVisibility(View.INVISIBLE);
-                }
-                if(mMsgSub.isShown()){
-                    mMsgSub.startAnimation(animationOut);
-                    mMsgSub.setVisibility(View.INVISIBLE);
-                }
-                if(!mMyHangouts.isShown()){
-                    mMyHangouts.setAnimation(animationIn);
-                    mMyHangouts.setVisibility(View.VISIBLE);
-                }
-                if(mNoHangoutsActive.isShown()){
-                    mNoHangoutsActive.setAnimation(animationOut);
-                    mNoHangoutsActive.setVisibility(View.GONE);
-                }
-                if(!mNoHangoutsPast.isShown()){
-                    mNoHangoutsPast.setAnimation(animationIn);
-                    mNoHangoutsPast.setVisibility(View.VISIBLE);
-                }
-            } else {
-                if(mMsgTitle.isShown()){
-                    mMsgTitle.startAnimation(animationOut);
-                    mMsgTitle.setVisibility(View.INVISIBLE);
-                }
-                if(mMsgSub.isShown()){
-                    mMsgSub.startAnimation(animationOut);
-                    mMsgSub.setVisibility(View.INVISIBLE);
-                }
-                if(!mMyHangouts.isShown()){
-                    mMyHangouts.setAnimation(animationIn);
-                    mMyHangouts.setVisibility(View.VISIBLE);
-                }
-                if(mNoHangoutsActive.isShown()){
-                    mNoHangoutsActive.setAnimation(animationOut);
-                    mNoHangoutsActive.setVisibility(View.GONE);
-                }
-                if(mNoHangoutsPast.isShown()){
-                    mNoHangoutsPast.setAnimation(animationOut);
-                    mNoHangoutsPast.setVisibility(View.GONE);
-                }
-            }
-        }
-    }
 
-    private boolean connectedToInternet(){
-        if(getActivity() != null){
-            ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-            if(cm != null){
-                Network[] activeNetworks = cm.getAllNetworks();
-                for (Network n: activeNetworks) {
-                    NetworkInfo nInfo = cm.getNetworkInfo(n);
-                    if(nInfo.isConnected())
-                        return true;
-                }
+        // If user has only past hangouts and no active hangouts, hangouts lists will be shown with
+        // an appropriate message
+        } else if(mActiveHangouts.size() == 0 && mPastHangouts.size() > 0) {
+            mMsgTitle.setVisibility(View.INVISIBLE);
+            mMsgSub.setVisibility(View.INVISIBLE);
+            if(!mMyHangouts.isShown()){
+                mMyHangouts.setAnimation(animationIn);
+                mMyHangouts.setVisibility(View.VISIBLE);
+            }
+            if(!mPastHangoutsLabel.isShown()){
+                mPastHangoutsLabel.setAnimation(animationIn);
+                mPastHangoutsLabel.setVisibility(View.VISIBLE);
+            }
+            if(!mNoHangoutsActive.isShown()){
+                mNoHangoutsActive.setAnimation(animationIn);
+                mNoHangoutsActive.setVisibility(View.VISIBLE);
+            }
+
+        // If user has only active hangouts and no past hangouts, hangouts lists will be shown with
+        // an appropriate message
+        } else if(mPastHangouts.size() == 0 && mActiveHangouts.size() > 0) {
+            mMsgTitle.setVisibility(View.INVISIBLE);
+            mMsgSub.setVisibility(View.INVISIBLE);
+            if(!mMyHangouts.isShown()){
+                mMyHangouts.setAnimation(animationIn);
+                mMyHangouts.setVisibility(View.VISIBLE);
+            }
+            mNoHangoutsActive.setVisibility(View.GONE);
+            mPastHangoutsLabel.setVisibility(View.INVISIBLE);
+
+        // If user has active hangouts and past hangouts, all the lists will be shown
+        // and all the messages will be hidden
+        } else {
+            mMsgTitle.setVisibility(View.INVISIBLE);
+            mMsgSub.setVisibility(View.INVISIBLE);
+            if(!mMyHangouts.isShown()){
+                mMyHangouts.setAnimation(animationIn);
+                mMyHangouts.setVisibility(View.VISIBLE);
+            }
+            mNoHangoutsActive.setVisibility(View.GONE);
+            if(!mPastHangoutsLabel.isShown()){
+                mPastHangoutsLabel.setAnimation(animationIn);
+                mPastHangoutsLabel.setVisibility(View.VISIBLE);
             }
         }
-        return false;
     }
 
     private void adjustList(){
         if(mActiveHangoutsList != null && mPastHangoutsList != null){
+            boolean isPhone = mView.findViewById(R.id.my_view) != null;
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                if(!getResources().getBoolean(R.bool.is_tablet)){
+                if(isPhone){
                     mActiveHangoutsList.setLayoutManager(new LinearLayoutManager(getContext()));
                     mPastHangoutsList.setLayoutManager(new LinearLayoutManager(getContext()));
                 } else {
@@ -399,7 +356,7 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
                             (2, StaggeredGridLayoutManager.VERTICAL));
                 }
             } else {
-                if(!getResources().getBoolean(R.bool.is_tablet)){
+                if(isPhone){
                     mActiveHangoutsList.setLayoutManager(new StaggeredGridLayoutManager
                             (2, StaggeredGridLayoutManager.VERTICAL));
                     mPastHangoutsList.setLayoutManager(new StaggeredGridLayoutManager
@@ -412,6 +369,91 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
                 }
             }
         }
+    }
+
+    public void getMyHangouts(){
+        mRefresh.setRefreshing(true);
+        Call<Hangouts> call = mInterface.getMyHangouts
+                (Details.getProfileId(getContext()));
+        call.enqueue(new Callback<Hangouts>() {
+            @Override
+            public void onResponse(@NonNull Call<Hangouts> call,
+                                   @NonNull retrofit2.Response<Hangouts> response) {
+
+                int emptyActive = mActiveHangouts.size();
+                mActiveHangouts.clear();
+                mActiveAdapter.notifyItemRangeRemoved(0, emptyActive);
+                int emptyPast = mPastHangouts.size();
+                mPastHangouts.clear();
+                mPastAdapter.notifyItemRangeRemoved(0, emptyPast);
+
+                Hangouts set = response.body();
+                if(response.isSuccessful() && set != null){
+                    List<Hangout> data = set.getHangouts();
+                    if(data != null){
+                        for(int i = 0; i < data.size() - 1; i++){
+                            Hangout hangout = data.get(i);
+                            List<User> users = hangout.getFriends();
+                            if(users != null && users.size() > 1){
+                                users.remove(users.size() - 1);
+                            }
+                            hangout.setIsActive(hangout.getTimestamp() + HANGOUT_TIME
+                                    > System.currentTimeMillis());
+                            if(hangout.getIsActive()){
+                                mActiveHangouts.add(hangout);
+                                mActiveAdapter.notifyItemInserted(mActiveHangouts.size() - 1);
+                            } else {
+                                mPastHangouts.add(hangout);
+                                mPastAdapter.notifyItemInserted(mPastHangouts.size() - 1);
+                            }
+                            arrangeMessages();
+                        }
+                    }
+                }
+                arrangeMessages();
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Hangouts> call, @NonNull Throwable t) {
+                int emptyActive = mActiveHangouts.size();
+                mActiveHangouts.clear();
+                mActiveAdapter.notifyItemRangeRemoved(0, emptyActive);
+                int emptyPast = mPastHangouts.size();
+                mPastHangouts.clear();
+                mPastAdapter.notifyItemRangeRemoved(0, emptyPast);
+                arrangeMessages();
+                Snackbar.make(mView, R.string.no_connection, Snackbar.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void refreshHangout(final int position, long hangoutId){
+        Call<Hangout> hangoutCall = mInterface.getHangout(hangoutId);
+        hangoutCall.enqueue(new Callback<Hangout>() {
+            @Override
+            public void onResponse(@NonNull Call<Hangout> call,
+                                   @NonNull retrofit2.Response<Hangout> response) {
+                Hangout hangout = response.body();
+                if(response.isSuccessful() && hangout != null){
+                    List<User> users = hangout.getFriends();
+                    if(users.size() > 0){
+                        users.remove(users.size() - 1);
+                    }
+                    hangout.setIsActive(hangout.getTimestamp() + HANGOUT_TIME
+                            > System.currentTimeMillis());
+                    mActiveHangouts.set(position, hangout);
+                    mActiveAdapter.notifyItemChanged(position);
+                } else {
+                    Toast.makeText(getContext(), R.string.went_wrong, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Hangout> call, @NonNull Throwable t) {
+                t.printStackTrace();
+                Snackbar.make(mView, R.string.no_connection, Snackbar.LENGTH_LONG).show();
+            }
+        });
     }
 
 }

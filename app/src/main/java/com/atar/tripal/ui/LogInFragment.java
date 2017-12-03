@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -34,6 +35,7 @@ public class LogInFragment extends Fragment implements TextWatcher {
     private Button mLogIn;
     private BottomSheetBehavior mResetPassSheet;
     private EditText mEmailReset;
+    private Toolbar mToolbar;
 
     public LogInFragment() {}
 
@@ -42,7 +44,7 @@ public class LogInFragment extends Fragment implements TextWatcher {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        mView = inflater.inflate(R.layout.fragment_sign_in, container, false);
+        mView = inflater.inflate(R.layout.fragment_log_in, container, false);
 
         setRetainInstance(true);
 
@@ -106,9 +108,36 @@ public class LogInFragment extends Fragment implements TextWatcher {
         });
 
         // Initialling Reset Password Sheet
-        mResetPassSheet = BottomSheetBehavior.from((LinearLayout)mView.findViewById(R.id.reset_pass_sheet));
-        if(mResetPassSheet != null){
+        LinearLayout layout = mView.findViewById(R.id.reset_pass_sheet);
+
+        // Because Tablets have AlertDialog instead of BottomSheet, we need to know if its a tablet or not.
+        if(layout != null){
+            mResetPassSheet = BottomSheetBehavior.from(layout);
             mResetPassSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
+            mResetPassSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+                @Override
+                public void onStateChanged(@NonNull View bottomSheet, int newState) {
+                    if(newState == BottomSheetBehavior.STATE_DRAGGING ||
+                            newState == BottomSheetBehavior.STATE_SETTLING){
+                        mView.findViewById(R.id.reset_pass_shadow).setVisibility(View.VISIBLE);
+                    } else {
+                        mView.findViewById(R.id.reset_pass_shadow).setVisibility(View.INVISIBLE);
+                    }
+                }
+
+                @Override
+                public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                    if(slideOffset <= 0){
+                        if (getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+                            mToolbar.setNavigationIcon(R.mipmap.arrow_rtl);
+                        } else {
+                            mToolbar.setNavigationIcon(R.mipmap.arrow_ltr);
+                        }
+                    } else {
+                        mToolbar.setNavigationIcon(android.R.drawable.ic_menu_close_clear_cancel);
+                    }
+                }
+            });
             mEmailReset = mView.findViewById(R.id.reset_email);
             Button resetBtn = mView.findViewById(R.id.reset_ok);
             resetBtn.setOnClickListener(new View.OnClickListener() {
@@ -122,14 +151,23 @@ public class LogInFragment extends Fragment implements TextWatcher {
                     }
                 }
             });
-//            Button dismiss = mView.findViewById(R.id.reset_cancel);
-//            dismiss.setOnClickListener(new View.OnClickListener() {
-//                @Override
-//                public void onClick(View view) {
-//                    mResetPassSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
-//                }
-//            });
         }
+
+        mToolbar = mView.findViewById(R.id.ln_toolbar);
+        mToolbar.setTitle(R.string.log_in);
+        if (getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            mToolbar.setNavigationIcon(R.mipmap.arrow_rtl);
+        } else {
+            mToolbar.setNavigationIcon(R.mipmap.arrow_ltr);
+        }
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(getActivity() != null){
+                    getActivity().onBackPressed();
+                }
+            }
+        });
     }
 
     public void onFailedLogIn(boolean incorrect){
@@ -141,7 +179,11 @@ public class LogInFragment extends Fragment implements TextWatcher {
     }
 
     public int getSheetState(){
-        return mResetPassSheet.getState();
+        if(mResetPassSheet != null){
+            return mResetPassSheet.getState();
+        } else {
+            return -33;
+        }
     }
 
     public void hideSheet(){
@@ -161,14 +203,24 @@ public class LogInFragment extends Fragment implements TextWatcher {
     @Override
     public void afterTextChanged(Editable editable) {
         if(getContext() != null){
-            CharSequence s1 = mPassword.getText();
-            CharSequence s2 = mEmail.getText();
-            mLogIn.setEnabled(s1 != null && !s1.equals("") && s2 != null && !s2.equals(""));
+            mLogIn.setEnabled(android.util.Patterns.EMAIL_ADDRESS.matcher
+                    (mEmail.getText().toString().trim()).matches() &&
+                    !mPassword.getText().toString().equals(""));
             if(mLogIn.isEnabled()){
                 mLogIn.setBackgroundTintList(getResources().getColorStateList(R.color.message_outcome));
             } else {
                 mLogIn.setBackgroundTintList(getResources().getColorStateList(R.color.writing_color));
             }
         }
+    }
+
+    public void cleanFields(){
+        mPassword.setText("");
+        if(mEmailReset != null){
+            mEmailReset.setText("");
+        }
+        mEmail.setText("");
+        mLogIn.setEnabled(false);
+        mLogIn.setBackgroundTintList(getResources().getColorStateList(R.color.writing_color));
     }
 }

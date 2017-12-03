@@ -6,9 +6,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -35,10 +32,12 @@ import com.atar.tripal.net.ApiClient;
 import com.atar.tripal.net.ApiInterface;
 import com.atar.tripal.net.LocationDetectorService;
 import com.atar.tripal.net.NetConstants;
+import com.atar.tripal.objects.Hangouts;
 import com.atar.tripal.objects.User;
 import com.atar.tripal.objects.Hangout;
 import com.atar.tripal.objects.Message;
 import com.atar.tripal.objects.Result;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,38 +58,18 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
         public void onReceive(Context context, Intent intent) {
             switch(intent.getIntExtra(LocationDetectorService.CODE, -1)){
                 case LocationDetectorService.START:
-                    if(mMsgMain.isShown()){
-                        mMsgMain.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out));
-                        mMsgMain.setVisibility(View.INVISIBLE);
-                    }
-                    if(!mMsgSub.isShown()){
-                        mMsgSub.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.fade_out));
-                        mMsgSub.setVisibility(View.INVISIBLE);
-                    }
+                    showOrHideMessage();
                     mRefresh.setRefreshing(true);
                     break;
                 case LocationDetectorService.END:
                     mHangouts.clear();
                     mAdapter.notifyDataSetChanged();
-                    mRefresh.setRefreshing(false);
+                    showOrHideMessage();
                     break;
                 case LocationDetectorService.GET_AROUND_HANGOUTS:
-                    mRefresh.setRefreshing(false);
-                    mHangouts.add(0, (Hangout)intent.getSerializableExtra("hangout"));
-                    mAdapter.notifyItemInserted(0);
-                    break;
-                case LocationDetectorService.START_GETTING_HANGOUTS:
-                    mRefresh.setRefreshing(false);
-                    mHangouts.clear();
-                    mAdapter.notifyDataSetChanged();
-                    Hangout hangout = (Hangout)intent.getSerializableExtra("hangout");
-                    if(hangout != null){
-                        mHangouts.add(0, (Hangout)intent.getSerializableExtra("hangout"));
-                        mAdapter.notifyItemInserted(0);
-                    }
+                    getAroundHangouts();
                     break;
             }
-            showOrHideMessage();
         }
     }
 
@@ -216,79 +195,66 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
     private void initUIWidgets(){
 
         // Screens
-        mMsgMain = mView.findViewById(R.id.around_msg_title);
-        mMsgSub = mView.findViewById(R.id.around_msg_sub);
+        mMsgMain = mView.findViewById(R.id.ar_msg_title);
+        mMsgSub = mView.findViewById(R.id.ar_msg_sub);
 
         // RecyclerView that fits the hangouts
-        mHangoutsList = mView.findViewById(R.id.around_list);
+        mHangoutsList = mView.findViewById(R.id.ar_list);
         adjustList();
         mAdapter = new AroundHangoutsAdapter(this, getContext(), mHangouts);
         mHangoutsList.setAdapter(mAdapter);
         mHangoutsList.setHasFixedSize(true);
 
         // Swipe to Refresh
-        mRefresh = mView.findViewById(R.id.around_refresh);
+        mRefresh = mView.findViewById(R.id.ar_refresh);
         int [] colors = new int[]{R.color.colorAccent, R.color.colorPrimary};
         mRefresh.setColorSchemeResources(colors);
         mRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                if(getActivity() != null && connectedToInternet()){
-                    Intent intentService = new Intent(getContext(),
-                            LocationDetectorService.class);
-                    intentService.putExtra(LocationDetectorService.CODE,
-                            LocationDetectorService.GET_AROUND_HANGOUTS);
-                    getActivity().startService(intentService);
-                } else if(connectedToInternet()){
-                    Toast.makeText(getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
-                }
+                getAroundHangouts();
             }
         });
 
     }
 
     public void showOrHideMessage(){
-        Animation fadeIn = AnimationUtils.loadAnimation(getContext(), R.anim.fade_in);
-        Animation fadeOut = AnimationUtils.loadAnimation(getContext(), R.anim.fade_out);
+        Animation fadeIn = AnimationUtils.loadAnimation(getContext(), android.R.anim.fade_in);
+
+        // If the user is offline, the swipe refresh layout will be hidden and an appropriate
+        // message will appear
         if(!Details.getStatus(getContext())) {
-            if(!mMsgMain.isShown()){
-                mMsgMain.startAnimation(fadeIn);
-                mMsgMain.setVisibility(View.VISIBLE);
-            }
-            mMsgMain.setText(R.string.you_are_offline);
-            if(!mMsgSub.isShown()){
-                mMsgSub.startAnimation(fadeIn);
-                mMsgSub.setVisibility(View.VISIBLE);
-            }
-            mMsgSub.setText(R.string.go_online);
             if(mRefresh.isShown()){
                 mRefresh.startAnimation(fadeIn);
                 mRefresh.setVisibility(View.GONE);
             }
+
+            mMsgMain.startAnimation(fadeIn);
+            mMsgMain.setVisibility(View.VISIBLE);
+            mMsgMain.setText(R.string.you_are_offline);
+            mMsgSub.startAnimation(fadeIn);
+            mMsgSub.setVisibility(View.VISIBLE);
+            mMsgSub.setText(R.string.go_online);
+
+        // If the user is online and no hangouts are around him, swipe refresh layout will be shown with an appropriate message
         } else if(mAdapter.getItemCount() == 0){
-            if(!mMsgMain.isShown()){
-                mMsgMain.startAnimation(fadeIn);
-                mMsgMain.setVisibility(View.VISIBLE);
-            }
+
+            mMsgMain.startAnimation(fadeIn);
+            mMsgMain.setVisibility(View.VISIBLE);
             mMsgMain.setText(R.string.no_hangouts_around);
-            if(!mMsgSub.isShown()){
-                mMsgSub.startAnimation(fadeIn);
-                mMsgSub.setVisibility(View.VISIBLE);
-            }
+            mMsgSub.startAnimation(fadeIn);
+            mMsgSub.setVisibility(View.VISIBLE);
             mMsgSub.setText(R.string.setup_hangout);
+
             if(!mRefresh.isShown()){
                 mRefresh.startAnimation(fadeIn);
                 mRefresh.setVisibility(View.VISIBLE);
             }
+
+        // If the user is online and there are hangouts around him, swipe to refresh layout will be shown and messages will disappear;
         } else {
-            if(mMsgMain.isShown()){
-                mMsgMain.startAnimation(fadeOut);
-                mMsgMain.setVisibility(View.INVISIBLE);
-            }
-            if(mMsgSub.isShown()){
-                mMsgSub.startAnimation(fadeOut);
-                mMsgSub.setVisibility(View.INVISIBLE);
-            }
+            mMsgMain.setVisibility(View.INVISIBLE);
+            mMsgSub.setVisibility(View.INVISIBLE);
             if(!mRefresh.isShown()){
                 mRefresh.startAnimation(fadeIn);
                 mRefresh.setVisibility(View.VISIBLE);
@@ -297,32 +263,18 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
         mRefresh.setRefreshing(false);
     }
 
-    private boolean connectedToInternet(){
-        if(getActivity() != null){
-            ConnectivityManager cm = (ConnectivityManager)getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-            if(cm != null){
-                Network[] activeNetworks = cm.getAllNetworks();
-                for (Network n: activeNetworks) {
-                    NetworkInfo nInfo = cm.getNetworkInfo(n);
-                    if(nInfo.isConnected())
-                        return true;
-                }
-            }
-        }
-        return false;
-    }
-
     private void adjustList(){
         if(mHangoutsList != null){
+            boolean isPhone = mView.findViewById(R.id.ar_view) != null;
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) {
-                if(getResources().getBoolean(R.bool.is_tablet)){
+                if(isPhone){
                     mHangoutsList.setLayoutManager(new LinearLayoutManager(getContext()));
                 } else {
                     mHangoutsList.setLayoutManager(new StaggeredGridLayoutManager
                             (2, StaggeredGridLayoutManager.VERTICAL));
                 }
             } else {
-                if(getResources().getBoolean(R.bool.is_tablet)){
+                if(isPhone){
                     mHangoutsList.setLayoutManager(new StaggeredGridLayoutManager
                             (2, StaggeredGridLayoutManager.VERTICAL));
                 } else {
@@ -331,6 +283,45 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
                 }
             }
         }
+    }
+
+    private synchronized void getAroundHangouts(){
+        LatLng currentLocation = Details.getLocation(getContext());
+        Call<Hangouts> call = mInterface.getHangoutsAroundMe(currentLocation.latitude,
+                currentLocation.longitude, Details.getProfileId(getContext()));
+        call.enqueue(new Callback<Hangouts>() {
+            @Override
+            public void onResponse(@NonNull Call<Hangouts> call,
+                                   @NonNull retrofit2.Response<Hangouts> response) {
+                mHangouts.clear();
+                mAdapter.notifyDataSetChanged();
+                Hangouts hangouts = response.body();
+                if(response.isSuccessful() && hangouts != null){
+                    List<Hangout> hangoutList = hangouts.getHangouts();
+                    if(hangoutList != null){
+                        for(int i = 0; i < hangoutList.size() - 1; i++){
+                            Hangout hangout = hangoutList.get(i);
+                            hangout.setRequestSent(mHandler.getSentRequests(hangout.getId()) > 0);
+                            mHangouts.add(hangout);
+                            mAdapter.notifyItemInserted(mHangouts.size() - 1);
+                        }
+                    }
+                    showOrHideMessage();
+                } else if(!response.isSuccessful()) {
+                    Toast.makeText(getContext(), R.string.went_wrong, Toast.LENGTH_SHORT).show();
+                } else {
+                    showOrHideMessage();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Hangouts> call, @NonNull Throwable t) {
+                t.printStackTrace();
+                mHangouts.clear();
+                mAdapter.notifyDataSetChanged();
+                Toast.makeText(getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }

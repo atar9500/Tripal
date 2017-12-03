@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -27,7 +28,6 @@ import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.location.places.AutocompleteFilter;
 import com.google.android.gms.location.places.ui.PlaceAutocomplete;
 import com.rengwuxian.materialedittext.MaterialEditText;
-import com.squareup.picasso.Picasso;
 
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -60,7 +60,7 @@ public class SignUpFragment extends Fragment implements TextWatcher {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        mView = inflater.inflate(R.layout.fragment_register, container, false);
+        mView = inflater.inflate(R.layout.fragment_sign_up, container, false);
 
         setRetainInstance(true);
 
@@ -91,7 +91,7 @@ public class SignUpFragment extends Fragment implements TextWatcher {
     }
 
     private void initFields(){
-        mContinue = mView.findViewById(R.id.si_continue);
+        mContinue = mView.findViewById(R.id.su_continue);
         mContinue.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -105,19 +105,19 @@ public class SignUpFragment extends Fragment implements TextWatcher {
             }
         });
 
-        mUsername = mView.findViewById(R.id.si_name);
+        mUsername = mView.findViewById(R.id.su_name);
         mUsername.addTextChangedListener(this);
 
-        mPassword = mView.findViewById(R.id.si_password);
+        mPassword = mView.findViewById(R.id.su_password);
         mPassword.addTextChangedListener(this);
 
-        mEmail = mView.findViewById(R.id.si_email);
+        mEmail = mView.findViewById(R.id.su_email);
         mEmail.addTextChangedListener(this);
 
-        mConfirmPassword = mView.findViewById(R.id.si_confirm_password);
+        mConfirmPassword = mView.findViewById(R.id.su_confirm_password);
         mConfirmPassword.addTextChangedListener(this);
 
-        mDate = mView.findViewById(R.id.si_date);
+        mDate = mView.findViewById(R.id.su_date);
         mDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -153,7 +153,7 @@ public class SignUpFragment extends Fragment implements TextWatcher {
         });
         mDate.addTextChangedListener(this);
 
-        mGender = mView.findViewById(R.id.si_gender);
+        mGender = mView.findViewById(R.id.su_gender);
         if(getContext() != null){
             ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource
                     (getContext(), R.array.genders, android.R.layout.simple_list_item_1);
@@ -170,13 +170,13 @@ public class SignUpFragment extends Fragment implements TextWatcher {
             });
         }
 
-        mAboutMe = mView.findViewById(R.id.si_about_me);
+        mAboutMe = mView.findViewById(R.id.su_about_me);
 
-        mInterests = mView.findViewById(R.id.si_interests);
+        mInterests = mView.findViewById(R.id.su_interests);
 
-        mMusic = mView.findViewById(R.id.si_movies);
+        mMusic = mView.findViewById(R.id.su_movies);
 
-        mOrigin = mView.findViewById(R.id.si_origin);
+        mOrigin = mView.findViewById(R.id.su_origin);
         mOrigin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -192,6 +192,22 @@ public class SignUpFragment extends Fragment implements TextWatcher {
                     }
                 } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
                     e.printStackTrace();
+                }
+            }
+        });
+
+        Toolbar toolbar = mView.findViewById(R.id.su_toolbar);
+        toolbar.setTitle("Sign Up");
+        if (getResources().getConfiguration().getLayoutDirection() == View.LAYOUT_DIRECTION_RTL) {
+            toolbar.setNavigationIcon(R.mipmap.arrow_rtl);
+        } else {
+            toolbar.setNavigationIcon(R.mipmap.arrow_ltr);
+        }
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(getActivity() != null){
+                    getActivity().onBackPressed();
                 }
             }
         });
@@ -240,21 +256,22 @@ public class SignUpFragment extends Fragment implements TextWatcher {
 
     private void updateButton(){
         if(getContext() != null){
-            CharSequence s1 = mPassword.getText();
-            CharSequence s2 = mConfirmPassword.getText();
-            CharSequence s3 = mDate.getText();
-            Object s4 = mGender.getSelectedItem();
-            CharSequence s5 = mPassword.getText();
-            CharSequence s6 = mPassword.getText();
-            CharSequence s7 = mUsername.getText();
+            String s1 = mPassword.getText().toString();
+            String s2 = mConfirmPassword.getText().toString();
+            String s3 = mDate.getText().toString();
+            String s4 = mUsername.getText().toString();
+
             mContinue.setEnabled(android.util.Patterns.EMAIL_ADDRESS.matcher(mEmail.getText().toString().trim()).matches()
-                    && s1 != null && !s1.equals("") && s2 != null && !s2.equals("") && s3 != null && !s3.equals("")
-                    && s4 != null && s5 != null && !s5.equals("") && s6 != null && !s6.equals("")
-                    && s7 != null && !s7.equals(""));
+                    && mPassword.isCharactersCountValid() && mUsername.isCharactersCountValid()
+                    && mConfirmPassword.isCharactersCountValid() && !s3.equals("")
+                    && !s4.equals("") && s1.equals(s2));
             if(mContinue.isEnabled()){
                 mContinue.setBackgroundTintList(getResources().getColorStateList(R.color.message_outcome));
             } else {
                 mContinue.setBackgroundTintList(getResources().getColorStateList(R.color.writing_color));
+                if(!s1.equals(s2)){
+                    mConfirmPassword.setError(getString(R.string.pass_not_match));
+                }
             }
         }
     }
@@ -268,5 +285,20 @@ public class SignUpFragment extends Fragment implements TextWatcher {
     @Override
     public void afterTextChanged(Editable editable) {
         updateButton();
+    }
+
+    public void cleanFields(){
+        mPassword.setText("");
+        mUsername.setText("");
+        mConfirmPassword.setText("");
+        mDate.setText("");
+        mGender.setSelection(0);
+        mEmail.setText("");
+        mAboutMe.setText("");
+        mInterests.setText("");
+        mOrigin.setText("");
+        mMusic.setText("");
+        mContinue.setEnabled(false);
+        mContinue.setBackgroundTintList(getResources().getColorStateList(R.color.writing_color));
     }
 }

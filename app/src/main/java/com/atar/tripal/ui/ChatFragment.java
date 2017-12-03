@@ -61,13 +61,6 @@ public class ChatFragment extends Fragment {
                     mMessages.add(0, message);
                     mAdapter.notifyDataSetChanged();
                     showHideEmpty();
-                    if(Message.TYPE_MESSAGE != message.getType() && getActivity() != null){
-                        Intent intentService = new Intent(getActivity(),
-                                LocationDetectorService.class);
-                        intentService.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.GET_MY_HANGOUTS);
-                        getActivity().startService(intentService);
-                    }
                 } else if(message  == null) {
                     Toast.makeText(context, R.string.went_wrong, Toast.LENGTH_SHORT).show();
                 }

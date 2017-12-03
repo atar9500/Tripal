@@ -58,4 +58,8 @@ public class MainTabsAdapter extends FragmentPagerAdapter {
         }
     }
 
+    public void refreshMyHangouts(){
+        ((MyHangoutsFragment)mFragments[1]).getMyHangouts();
+    }
+
 }

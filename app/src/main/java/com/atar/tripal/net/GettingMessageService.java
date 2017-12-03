@@ -24,6 +24,7 @@ public class GettingMessageService extends FirebaseMessagingService {
 
     public static final String BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE =
             "com.atar.tripal.net.GettingMessageService.IdentifierForGettingMessageService";
+
     private static final String TAG = "GettingMessageService";
 
     @Override
@@ -48,6 +49,8 @@ public class GettingMessageService extends FirebaseMessagingService {
 
         Intent broadcastIntent = new Intent(BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE);
         broadcastIntent.putExtra(DBConstants.COL_ID, message.getId());
+        broadcastIntent.putExtra(DBConstants.COL_TYPE, message.getType());
+        broadcastIntent.putExtra(DBConstants.COL_HANGOUT_ID, message.getHangoutId());
         LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
     }
 
@@ -110,12 +113,6 @@ public class GettingMessageService extends FirebaseMessagingService {
                         " " + message.getContent();
                 break;
         }
-
-        Intent intentService = new Intent(GettingMessageService.this,
-                LocationDetectorService.class);
-        intentService.putExtra(LocationDetectorService.CODE,
-                LocationDetectorService.GET_MY_HANGOUTS);
-        startService(intentService);
 
         PendingIntent resultIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_ONE_SHOT);

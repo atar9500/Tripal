@@ -6,18 +6,19 @@
     tools:context="com.atar.tripal.ui.HangoutsAroundFragment">
 
     <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/around_refresh"
+        android:id="@+id/ar_refresh"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/around_list"
+            android:id="@+id/ar_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
     </android.support.v4.widget.SwipeRefreshLayout>
 
     <LinearLayout
+        android:id="@+id/ar_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -25,7 +26,7 @@
         android:gravity="center">
 
         <TextView
-            android:id="@+id/around_msg_title"
+            android:id="@+id/ar_msg_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -35,7 +36,7 @@
             android:textStyle="bold"/>
 
         <TextView
-            android:id="@+id/around_msg_sub"
+            android:id="@+id/ar_msg_sub"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
@@ -44,12 +45,5 @@
             android:padding="5dp"/>
 
     </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/around_loading"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
 
 </android.support.design.widget.CoordinatorLayout>

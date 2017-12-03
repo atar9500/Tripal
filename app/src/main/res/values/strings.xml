@@ -4,9 +4,11 @@
     <string name="title_activity_main">MainActivity</string>
     <string name="action_settings">Settings</string>
     <string name="title_activity_maps">Map</string>
-    <string name="permission_location_rationale">Tripal will need access to your Location in order to locate users nearby you.</string>
+    <string name="permission_location_rationale">Tripal will need access to your Location in order to locate hangouts nearby you.</string>
     <string name="permission_external_rationale">Tripal will need access to your storage in order to let you choose a photo from the gallery.</string>
     <string name="permission_camera_rationale">Tripal will need access to your camera in order to let you choose a take a photo.</string>
+
+    <string name="location_setting_unavailable">Please enable Location Services for Tripal in order to see hangouts around you</string>
 
     <string name="bar">Bar</string>
     <string name="atm">ATM</string>
@@ -46,7 +48,7 @@
     <string name="register">Register</string>
     <string name="dont_have_account">Don\'t have an account?</string>
     <string name="sign_up">Sign up</string>
-    <string name="sign_in">Sign In</string>
+    <string name="log_in">Log In</string>
     <string name="forgot_pass">Forgot password?</string>
     <string name="email_hint">example@tripal.com</string>
     <string name="pass_hint">abcd1234</string>
@@ -143,8 +145,6 @@
     <string name="my_hangouts">My hangouts</string>
 
     <string name="email_users">Email users</string>
-
-    <bool name="is_tablet">false</bool>
 
     <string-array name="genders">
         <item>Male</item>

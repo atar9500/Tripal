@@ -44,7 +44,6 @@ import com.atar.tripal.net.GettingMessageService;
 import com.atar.tripal.net.LocationDetectorService;
 import com.atar.tripal.net.NetConstants;
 import com.atar.tripal.net.RequestsService;
-import com.atar.tripal.net.StatusUpdaterService;
 import com.atar.tripal.objects.User;
 import com.atar.tripal.objects.Hangout;
 import com.atar.tripal.objects.Message;
@@ -156,43 +155,6 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
                 case LocationDetectorService.END:
                     startOnline();
                     break;
-                case LocationDetectorService.REFRESH_HANGOUT:
-                    switch(intent.getStringExtra(NetConstants.RESULT)){
-                        case "SUCCESS":
-                            mHangout = (Hangout)intent.getSerializableExtra("hangout");
-                            mTheme.setText(mHangout.getTheme());
-                            if(!mHangout.getIsActive()){
-                                mLeave.setVisible(false);
-                            }
-                            updateCount();
-                            if(mFriendsSheet.getState() != BottomSheetBehavior.STATE_EXPANDED){
-                                mBadge.setVisibility(View.INVISIBLE);
-                            }
-                            mFriendsList.add(mHangout.getHost());
-                            mFriendsList.addAll(mHangout.getFriends());
-                            mFriendsAdapter.notifyDataSetChanged();
-                            mRequestsList.addAll(mHandler.getReceivedRequests(mHangout.getId()));
-                            mRequestsAdapter.notifyDataSetChanged();
-                            showHideEmpty();
-                            if(mRequestCode == PRESS_NOTIFICATION || mRequestCode == PRESS_REQUEST){
-                                if(findViewById(R.id.hangout_container) != null){
-                                    getSupportFragmentManager().beginTransaction()
-                                            .setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_top)
-                                            .add(R.id.hangout_container, mChatFragment).commit();
-                                }
-                                if(mRequestCode == PRESS_REQUEST){
-                                    mFriendsSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
-                                }
-                            }
-                            mChatFragment.refresh();
-                            break;
-                        case "FAILED":
-                            Toast.makeText(context, R.string.no_connection,
-                                    Toast.LENGTH_SHORT).show();
-                            finish();
-                            break;
-                    }
-                    break;
             }
         }
     }
@@ -200,39 +162,27 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
     private class GettingMessagesReceiver extends BroadcastReceiver{
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message message = mHandler.getMessage(intent
-                    .getLongExtra(DBConstants.COL_ID, -1));
-            if(message != null){
-                switch (message.getType()){
-                    case Message.TYPE_JOIN:
+            switch (intent.getIntExtra(DBConstants.COL_HANGOUT_ID, -1)){
+                case Message.TYPE_JOIN:
+                    Message message = mHandler.getMessage(intent
+                            .getLongExtra(DBConstants.COL_ID, -1));
+                    if(message != null){
                         mRequestsList.add(0, message);
                         mRequestsAdapter.notifyDataSetChanged();
                         updateCount();
                         if(mFriendsSheet.getState() == BottomSheetBehavior.STATE_HIDDEN){
                             mBadge.setVisibility(View.INVISIBLE);
                         }
-                        showHideEmpty();
-                        break;
-                    case Message.TYPE_LEFT:
-                        Intent broadcastIntent = new Intent(HangoutActivity.this,
-                                LocationDetectorService.class);
-                        broadcastIntent.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.REFRESH_HANGOUT);
-                        broadcastIntent.putExtra(DBConstants.COL_HANGOUT_ID,
-                                mHangout.getId());
-                        startService(broadcastIntent);
-                        break;
-                    case Message.TYPE_PLACE:
-                        Intent intent2 = new Intent(HangoutActivity.this,
-                                LocationDetectorService.class);
-                        intent2.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.REFRESH_HANGOUT);
-                        intent2.putExtra(DBConstants.COL_HANGOUT_ID,
-                                mHangout.getId());
-                        startService(intent2);
-                        break;
-                }
+                    }
+                    break;
+                case Message.TYPE_LEFT:
+                    refreshHangout(mHangout.getId());
+                    break;
+                case Message.TYPE_PLACE:
+                    refreshHangout(mHangout.getId());
+                    break;
             }
+            showHideEmpty();
         }
     }
 
@@ -304,7 +254,7 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
                 }
                 mHangout = (Hangout) intent.getSerializableExtra("hangout");
                 if(mHangout == null){
-                    Toast.makeText(this, "Something went wrong...", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, R.string.went_wrong, Toast.LENGTH_LONG).show();
                     finish();
                 } else {
                     mFriendsList.add(mHangout.getHost());
@@ -317,22 +267,12 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
                 }
                 break;
             case PRESS_NOTIFICATION:
-                Intent serviceIntent = new Intent(HangoutActivity.this,
-                        LocationDetectorService.class);
-                serviceIntent.putExtra(LocationDetectorService.CODE,
-                        LocationDetectorService.REFRESH_HANGOUT);
                 long i = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
-                serviceIntent.putExtra(DBConstants.COL_HANGOUT_ID, i);
-                startService(serviceIntent);
+                refreshHangout(i);
                 break;
             case PRESS_REQUEST:
-                Intent servicesIntent = new Intent(HangoutActivity.this,
-                        LocationDetectorService.class);
-                servicesIntent.putExtra(LocationDetectorService.CODE,
-                        LocationDetectorService.REFRESH_HANGOUT);
                 long j = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
-                servicesIntent.putExtra(DBConstants.COL_HANGOUT_ID, j);
-                startService(servicesIntent);
+                refreshHangout(j);
                 break;
         }
 
@@ -619,7 +559,7 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
                         Log.i(TAG, "User chose not to make required location settings changes.");
                         Intent goOffline = new Intent(this,
                                 LocationDetectorService.class);
-                        goOffline.putExtra(StatusUpdaterService.CODE, StatusUpdaterService.OFFLINE);
+                        goOffline.putExtra(LocationDetectorService.CODE, LocationDetectorService.END);
                         startService(goOffline);
                         break;
                 }
@@ -642,15 +582,15 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
         mFriendsSheet.setState(BottomSheetBehavior.STATE_HIDDEN);
         mFriendsSheet.setBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
-            public void onStateChanged(@NonNull View bottomSheet, int newState) {
-                if(newState != BottomSheetBehavior.STATE_EXPANDED && newState != BottomSheetBehavior.STATE_DRAGGING){
+            public void onStateChanged(@NonNull View bottomSheet, int newState) {}
+            @Override
+            public void onSlide(@NonNull View bottomSheet, float slideOffset) {
+                if(slideOffset <= 0){
                     updateCount();
                 } else {
                     mBadge.setVisibility(View.INVISIBLE);
                 }
             }
-            @Override
-            public void onSlide(@NonNull View bottomSheet, float slideOffset) {}
         });
         mRequestsLabel = findViewById(R.id.fs_requests_label);
 
@@ -702,8 +642,9 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
 
     private void updateCount(){
         int numOfRequests = mHandler.getReceivedRequests(mHangout.getId()).size();
-        if(mHangout.getHost().getId().equals(Details.getProfileId(this)) &&
-                numOfRequests > 0 && mHangout.getIsActive()){
+        String hostId = mHangout.getHost().getId();
+        String userId = Details.getProfileId(this);
+        if(hostId.equals(userId) && numOfRequests > 0 && mHangout.getIsActive()){
             mBadge.setText(String.valueOf(numOfRequests));
             mBadge.setVisibility(View.VISIBLE);
         } else {
@@ -751,6 +692,44 @@ public class HangoutActivity extends AppCompatActivity implements HangoutCallbac
                 getString(mainTextStringId),
                 Snackbar.LENGTH_INDEFINITE)
                 .setAction(getString(actionStringId), listener).show();
+    }
+
+    private void refreshHangout(long id){
+        Call<Hangout> hangoutCall = mInterface.getHangout(id);
+        hangoutCall.enqueue(new Callback<Hangout>() {
+            @Override
+            public void onResponse(@NonNull Call<Hangout> call,
+                                   @NonNull retrofit2.Response<Hangout> response) {
+                Hangout hangout = response.body();
+                if(response.isSuccessful() && hangout != null){
+                    List<User> users = hangout.getFriends();
+                    if(users.size() > 0){
+                        users.remove(users.size() - 1);
+                    }
+                    hangout.setIsActive(hangout.getTimestamp() + NetConstants.HANGOUT_TIME
+                            > System.currentTimeMillis());
+                    mHangout = hangout;
+                    mFriendsList.clear();
+                    mFriendsList.addAll(mHangout.getFriends());
+                    mFriendsList.add(0, mHangout.getHost());
+                    mFriendsAdapter.notifyDataSetChanged();
+                    mChatFragment.refresh();
+                    if(mRequestCode == PRESS_REQUEST){
+                        mFriendsSheet.setState(BottomSheetBehavior.STATE_EXPANDED);
+                    }
+                } else {
+                    Toast.makeText(HangoutActivity.this, R.string.went_wrong,
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Hangout> call, @NonNull Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(HangoutActivity.this, R.string.no_connection,
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }

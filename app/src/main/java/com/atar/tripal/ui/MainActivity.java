@@ -27,12 +27,10 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.atar.tripal.BuildConfig;
@@ -42,9 +40,6 @@ import com.atar.tripal.db.Details;
 import com.atar.tripal.net.ApiClient;
 import com.atar.tripal.net.ApiInterface;
 import com.atar.tripal.net.LocationDetectorService;
-import com.atar.tripal.net.NetConstants;
-import com.atar.tripal.net.RequestsService;
-import com.atar.tripal.net.StatusUpdaterService;
 import com.atar.tripal.objects.User;
 import com.atar.tripal.objects.Hangout;
 import com.atar.tripal.objects.PlaceInfo;
@@ -70,27 +65,12 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL = 32;
     private static final int REQUEST_CHECK_SETTINGS = 0x1;
 
-    private class RequestsDetector extends BroadcastReceiver{
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if(intent != null && intent.getStringExtra(NetConstants.RESULT)
-                    .equals(NetConstants.RESULT_SUCCESS)){
-                Intent intentService = new Intent(MainActivity.this,
-                        LocationDetectorService.class);
-                intentService.putExtra(LocationDetectorService.CODE,
-                        LocationDetectorService.GET_MY_HANGOUTS);
-                startService(intentService);
-            }
-        }
-    }
-
     private class LocationDetectorReceiver extends BroadcastReceiver{
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            int i = intent.getIntExtra(LocationDetectorService.CODE, -1);
-            switch (i){
+            int code = intent.getIntExtra(LocationDetectorService.CODE, -1);
+            switch(code){
                 case LocationDetectorService.GPS_IS_NEEDED:
                     try {
                         if(intent.getExtras() != null){
@@ -105,66 +85,20 @@ public class MainActivity extends AppCompatActivity {
                         Log.i(TAG, "PendingIntent unable to execute request.");
                     }
                     break;
-                case LocationDetectorService.RENEW:
-                    switchOnline();
+                case LocationDetectorService.END:
+                    if(getSupportActionBar() != null){
+                        getSupportActionBar().setTitle(R.string.offline);
+                    }
+                    mAddNewHangout.hide();
+                    mAddNewHangout.setClickable(false);
                     break;
-            }
-        }
-    }
-
-    private class StatusUpdaterReceiver extends BroadcastReceiver{
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            int i = intent.getIntExtra(StatusUpdaterService.CODE, -1);
-            String s = intent.getStringExtra(NetConstants.RESULT);
-            if(i == StatusUpdaterService.ONLINE){
-                switch (s){
-                    case NetConstants.RESULT_SUCCESS:
-                        Details.saveStatus(MainActivity.this, true);
-                        Intent startLocating = new Intent(MainActivity.this,
-                                LocationDetectorService.class);
-                        startLocating.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.START);
-                        startService(startLocating);
-                        mStatus.setAnimation(AnimationUtils.loadAnimation(MainActivity.this,
-                                R.anim.fade_in));
-                        mStatus.setText(R.string.available);
-                        mAddNewHangout.show();
-                        mAddNewHangout.setClickable(true);
-                        break;
-                    case NetConstants.RESULT_FAILED:
-                        Snackbar.make(findViewById(R.id.main_activity),
-                                R.string.could_not_connect,
-                                Snackbar.LENGTH_LONG).show();
-                        mLocationEnabler.setChecked(false);
-                        mStatus.setAnimation(AnimationUtils.loadAnimation(MainActivity.this,
-                                R.anim.fade_in));
-                        mStatus.setText(R.string.offline);
-                        mAddNewHangout.hide();
-                        mAddNewHangout.setClickable(false);
-                        break;
-                }
-            } else if(i == StatusUpdaterService.OFFLINE) {
-                switch (s){
-                    case NetConstants.RESULT_SUCCESS:
-                        Intent startLocating = new Intent(MainActivity.this,
-                                LocationDetectorService.class);
-                        startLocating.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.END);
-                        startService(startLocating);
-                        Toast.makeText(context, "NOW OFFLINE", Toast.LENGTH_SHORT).show();
-                        break;
-                    case NetConstants.RESULT_FAILED:
-                        Toast.makeText(MainActivity.this, R.string.could_not_connect,
-                                Toast.LENGTH_SHORT).show();
-                        break;
-                }
-                mStatus.setAnimation(AnimationUtils.loadAnimation(MainActivity.this,
-                        R.anim.fade_in));
-                mStatus.setText(R.string.offline);
-                mAddNewHangout.hide();
-                mAddNewHangout.setClickable(false);
+                case LocationDetectorService.START:
+                    if(getSupportActionBar() != null){
+                        getSupportActionBar().setTitle(R.string.available);
+                    }
+                    mAddNewHangout.show();
+                    mAddNewHangout.setClickable(true);
+                    break;
             }
         }
     }
@@ -173,12 +107,12 @@ public class MainActivity extends AppCompatActivity {
      * UI WIDGETS
      */
     private SwitchCompat mLocationEnabler;
-    private TextView mStatus;
     private BottomSheetBehavior mNewHangoutSheet;
     private MaterialEditText mSetTheme;
     private ImageView mProfilePic;
     private FloatingActionButton mAddNewHangout;
     private Hangout mNewHangout;
+    private MainTabsAdapter mFragmentsAdapter;
 
     /**
      * Data
@@ -189,8 +123,6 @@ public class MainActivity extends AppCompatActivity {
      * Broadcast Receivers
      */
     private LocationDetectorReceiver mLocationDetectorReceiver;
-    private StatusUpdaterReceiver mStatusUpdaterReceiver;
-    private RequestsDetector mRequestsDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -209,16 +141,6 @@ public class MainActivity extends AppCompatActivity {
         mLocationDetectorReceiver = new LocationDetectorReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver
                 (mLocationDetectorReceiver, new IntentFilter(LocationDetectorService
-                        .BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
-
-        mStatusUpdaterReceiver = new StatusUpdaterReceiver();
-        LocalBroadcastManager.getInstance(this).registerReceiver
-                (mStatusUpdaterReceiver, new IntentFilter(StatusUpdaterService
-                        .BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
-
-        mRequestsDetector = new RequestsDetector();
-        LocalBroadcastManager.getInstance(this).registerReceiver
-                (mRequestsDetector, new IntentFilter(RequestsService
                         .BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
 
         if (!checkPermissionLocation()) {
@@ -253,8 +175,6 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mLocationDetectorReceiver);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mStatusUpdaterReceiver);
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mRequestsDetector);
     }
 
     @Override
@@ -372,14 +292,9 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
-        mStatus = findViewById(R.id.ma_status);
-        if(Details.getStatus(this)){
-            mStatus.setText(R.string.available);
-        }
-
-        MainTabsAdapter adapter = new MainTabsAdapter(getSupportFragmentManager(), this);
+        mFragmentsAdapter = new MainTabsAdapter(getSupportFragmentManager(), this);
         ViewPager viewPager = findViewById(R.id.la_container);
-        viewPager.setAdapter(adapter);
+        viewPager.setAdapter(mFragmentsAdapter);
         TabLayout tabLayout = findViewById(R.id.ma_tabs);
         tabLayout.setupWithViewPager(viewPager);
 
@@ -516,10 +431,10 @@ public class MainActivity extends AppCompatActivity {
     private void switchOnline(){
         if(!Details.getStatus(this)){
             if (checkPermissionLocation()) {
-                Intent intentService = new Intent(MainActivity.this,
-                        StatusUpdaterService.class);
-                intentService.putExtra(StatusUpdaterService.CODE, StatusUpdaterService.ONLINE);
-                startService(intentService);
+                Intent startLocating = new Intent(MainActivity.this,
+                        LocationDetectorService.class);
+                startLocating.putExtra(LocationDetectorService.CODE, LocationDetectorService.START);
+                startService(startLocating);
             } else if (!checkPermissionLocation()) {
                 requestPermissions(PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             }
@@ -527,18 +442,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void switchOffline(){
-        if(Details.getStatus(getApplicationContext())){
-            Intent goOffline = new Intent(MainActivity.this,
-                    StatusUpdaterService.class);
-            goOffline.putExtra(StatusUpdaterService.CODE, StatusUpdaterService.OFFLINE);
-            startService(goOffline);
-            Details.saveStatus(getApplicationContext(), false);
-        }
         Intent stopLocating = new Intent(MainActivity.this,
                 LocationDetectorService.class);
-        stopLocating.putExtra(StatusUpdaterService.CODE, LocationDetectorService.END);
+        stopLocating.putExtra(LocationDetectorService.CODE, LocationDetectorService.END);
         startService(stopLocating);
-        Details.saveStatus(getApplicationContext(), false);
     }
 
     private void sendHangoutToServer(){
@@ -552,11 +459,7 @@ public class MainActivity extends AppCompatActivity {
                     if(result.getResult().equals("SUCCESS")){
                         Toast.makeText(MainActivity.this, "Hangout Added",
                                 Toast.LENGTH_SHORT).show();
-                        Intent intentService = new Intent(MainActivity.this,
-                                LocationDetectorService.class);
-                        intentService.putExtra(LocationDetectorService.CODE,
-                                LocationDetectorService.GET_MY_HANGOUTS);
-                        startService(intentService);
+                        mFragmentsAdapter.refreshMyHangouts();
                     } else {
                         Toast.makeText(MainActivity.this, R.string.went_wrong,
                                 Toast.LENGTH_SHORT).show();

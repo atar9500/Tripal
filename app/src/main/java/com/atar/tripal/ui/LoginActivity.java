@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -41,7 +40,6 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.squareup.picasso.Picasso;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -76,23 +74,6 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        getWindow().setStatusBarColor(Color.TRANSPARENT);
-
-        Picasso.with(this).load(R.drawable.login_background).into((ImageView) findViewById(R.id.ln_back), new com.squareup.picasso.Callback() {
-            @Override
-            public void onSuccess() {
-
-            }
-
-            @Override
-            public void onError() {
-                Toast.makeText(LoginActivity.this, "FAILED", Toast.LENGTH_SHORT).show();
-            }
-        });
-
         mAuth = FirebaseAuth.getInstance();
 
         mInterface = ApiClient.getAPIClient().create(ApiInterface.class);
@@ -110,10 +91,16 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
             if(state != null && state.equals(LOG_IN_FRAGMENT) && !mLogInFragment.isAdded()){
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.la_container, mLogInFragment, LOG_IN_FRAGMENT).commit();
+                showStatusBar();
             } else if(state != null && state.equals(SIGN_UP_FRAGMENT) && !mSignUpFragment.isAdded()){
                 getSupportFragmentManager().beginTransaction()
                         .add(R.id.la_container, mSignUpFragment, SIGN_UP_FRAGMENT).commit();
+                showStatusBar();
+            } else {
+                hideStatusBar();
             }
+        } else {
+            hideStatusBar();
         }
 
         String i = Details.getProfileId(this);
@@ -151,17 +138,24 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
     @Override
     public void onBackPressed() {
         if(getCurrentFragment() instanceof LogInFragment){
-            if(mLogInFragment.getSheetState() != BottomSheetBehavior.STATE_HIDDEN){
+            int stateSheet = mLogInFragment.getSheetState();
+            if(stateSheet != BottomSheetBehavior.STATE_HIDDEN
+                    && stateSheet != BottomSheetBehavior.STATE_COLLAPSED
+                    && stateSheet != -33){
                 mLogInFragment.hideSheet();
             } else {
+                mLogInFragment.cleanFields();
                 getSupportFragmentManager().beginTransaction()
                         .setCustomAnimations(0, android.R.anim.fade_out)
                         .remove(mLogInFragment).commit();
+                hideStatusBar();
             }
         } else if(getCurrentFragment() instanceof  SignUpFragment){
+            mSignUpFragment.cleanFields();
             getSupportFragmentManager().beginTransaction()
                     .setCustomAnimations(0, android.R.anim.fade_out)
                     .remove(mSignUpFragment).commit();
+            hideStatusBar();
         } else {
             super.onBackPressed();
         }
@@ -192,7 +186,7 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
         super.onSaveInstanceState(outState);
         if(getCurrentFragment() instanceof LogInFragment){
             outState.putString("frag", LOG_IN_FRAGMENT);
-        } else {
+        } else if(getCurrentFragment() instanceof SignUpFragment){
             outState.putString("frag", SIGN_UP_FRAGMENT);
         }
     }
@@ -319,6 +313,7 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
         signIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showStatusBar();
                 getSupportFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, 0)
                         .add(R.id.la_container, mLogInFragment, LOG_IN_FRAGMENT).commit();
@@ -328,9 +323,10 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
         signUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                showStatusBar();
                 getSupportFragmentManager().beginTransaction()
                         .setCustomAnimations(android.R.anim.fade_in, 0)
-                        .add(R.id.la_container, mSignUpFragment, LOG_IN_FRAGMENT).commit();
+                        .add(R.id.la_container, mSignUpFragment, SIGN_UP_FRAGMENT).commit();
             }
         });
         Button googleSign = findViewById(R.id.la_google_sign);
@@ -483,5 +479,18 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
             }
         }
         return false;
+    }
+
+    private void hideStatusBar(){
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+    }
+
+    private void showStatusBar(){
+        getWindow().clearFlags(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
     }
 }

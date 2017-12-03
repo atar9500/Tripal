@@ -14,10 +14,10 @@
         android:layout_height="match_parent">
 
         <ImageView
-            android:id="@+id/ln_back"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"/>
+            android:scaleType="centerCrop"
+            android:src="@drawable/login_background"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -44,7 +44,7 @@
             android:layout_height="wrap_content">
 
             <Button
-                android:id="@+id/sn_google"
+                android:id="@+id/la_google_sign"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/text_income"
@@ -90,13 +90,15 @@
             android:layout_marginEnd="60dp">
 
             <Button
+                android:id="@+id/la_sign_in"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/sign_in"
+                android:text="@string/log_in"
                 android:textColor="@android:color/white"
                 style="@android:style/Widget.Material.Button.Borderless"/>
 
             <Button
+                android:id="@+id/la_sign_up"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/sign_up"

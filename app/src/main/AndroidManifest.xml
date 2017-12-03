@@ -42,9 +42,6 @@
             android:name=".net.RequestsService"
             android:exported="false" />
         <service
-            android:name=".net.StatusUpdaterService"
-            android:exported="false" />
-        <service
             android:name=".net.GettingMessageService"
             android:exported="false">
             <intent-filter>

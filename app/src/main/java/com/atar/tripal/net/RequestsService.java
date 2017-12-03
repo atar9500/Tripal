@@ -89,6 +89,7 @@ public class RequestsService extends IntentService {
                                 }
                                 Intent broadcastIntent = new Intent(BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE);
                                 broadcastIntent.putExtra(DBConstants.COL_ID, message.getId());
+                                broadcastIntent.putExtra(DBConstants.COL_HANGOUT_ID, message.getHangoutId());
                                 broadcastIntent.putExtra(NetConstants.RESULT, result.getResult());
                                 broadcastIntent.putExtra(NetConstants.POSITION, pos);
                                 LocalBroadcastManager.getInstance(RequestsService.this)
