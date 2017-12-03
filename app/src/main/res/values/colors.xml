@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#03a9f4</color>
+    <color name="colorPrimaryDark">#03a9f4</color>
+    <color name="colorAccent">#ffca28</color>
+
+    <color name="signInColor">#8bc34a</color>
+    <color name="registerColor">#d32f2f</color>
+
+    <color name="black_indicator">#33000000</color>
+
+    <color name="message_income">#f5f5f5</color>
+    <color name="text_income">#424242</color>
+    <color name="time_income">#757575</color>
+
+    <color name="message_outcome">#039be5</color>
+    <color name="text_outcome">#fafafa</color>
+
+    <color name="thread_title">#424242</color>
+    <color name="thread_body">#616161</color>
+    <color name="info_message">#7b616161</color>
+
+    <color name="field_color">#fafafa</color>
+    <color name="writing_color">#e0e0e0</color>
+
+</resources>

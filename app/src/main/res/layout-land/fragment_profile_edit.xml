@@ -1,0 +1,108 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    tools:context="com.atar.tripal.ui.ProfileEditFragment"
+    tools:ignore="ContentDescription"
+    android:padding="10dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/personal_info"
+        android:textStyle="bold"
+        android:textSize="25sp"/>
+
+    <com.rengwuxian.materialedittext.MaterialEditText
+        android:id="@+id/pe_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="date"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:clickable="false"
+        android:cursorVisible="false"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        app:met_floatingLabel="highlight"
+        app:met_floatingLabelAlwaysShown="true"
+        app:met_floatingLabelText="@string/birthday"/>
+
+    <Spinner
+        android:id="@+id/pe_gender"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"/>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/origin_hint"
+        android:layout_marginBottom="10dp">
+
+        <com.rengwuxian.materialedittext.MaterialEditText
+            android:id="@+id/pe_origin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:cursorVisible="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            app:met_validateOnFocusLost="true"
+            app:met_helperText="@string/travellers_would_know"
+            app:met_helperTextAlwaysShown="true"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/about_hint"
+        android:layout_marginBottom="10dp">
+
+        <com.rengwuxian.materialedittext.MaterialEditText
+            android:id="@+id/pe_about_me"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="70"
+            app:met_maxCharacters="500"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/interests_hint"
+        android:layout_marginBottom="10dp">
+
+        <com.rengwuxian.materialedittext.MaterialEditText
+            android:id="@+id/pe_interests"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="70"
+            app:met_maxCharacters="500"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+    <android.support.design.widget.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:hint="@string/movies_books_music">
+
+        <com.rengwuxian.materialedittext.MaterialEditText
+            android:id="@+id/pe_movies"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="70"
+            app:met_maxCharacters="500"/>
+
+    </android.support.design.widget.TextInputLayout>
+
+</LinearLayout>

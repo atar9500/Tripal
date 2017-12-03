@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/reset_pass_sheet"
+    android:orientation="vertical"
+    android:paddingTop="20dp"
+    android:paddingStart="15dp"
+    android:paddingEnd="15dp"
+    android:background="@color/message_income"
+    android:fitsSystemWindows="true"
+    app:layout_behavior="android.support.design.widget.BottomSheetBehavior"
+    app:behavior_hideable="true"
+    app:behavior_peekHeight="0dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp"
+        android:text="@string/reset_password"/>
+
+    <com.rengwuxian.materialedittext.MaterialEditText
+        android:id="@+id/reset_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:met_floatingLabelAlwaysShown="true"
+        app:met_floatingLabel="highlight"
+        app:met_floatingLabelText="@string/email_field"
+        app:met_validateOnFocusLost="true"/>
+
+    <Button
+        android:id="@+id/reset_ok"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="@color/colorAccent"
+        android:text="@string/reset"
+        style="?android:attr/borderlessButtonStyle"/>
+
+    <!--<FrameLayout-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_margin="10dp">-->
+
+    <!--<Button-->
+    <!--android:id="@+id/reset_cancel"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="@android:string/cancel"-->
+    <!--android:textColor="@color/text_income"-->
+    <!--style="?android:attr/borderlessButtonStyle"/>-->
+
+    <!--<Button-->
+    <!--android:id="@+id/reset_ok"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_gravity="end"-->
+    <!--android:textColor="@color/colorAccent"-->
+    <!--android:text="@string/reset"-->
+    <!--style="?android:attr/borderlessButtonStyle"/>-->
+
+    <!--</FrameLayout>-->
+
+</LinearLayout>

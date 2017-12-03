@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="ContentDescription"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="4dp"
+    app:cardElevation="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/my_vh_pic1"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/default_profile"
+                    android:scaleType="centerCrop"
+                    android:layout_weight="1"/>
+
+                <ImageView
+                    android:id="@+id/my_vh_pic2"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/default_profile"
+                    android:scaleType="centerCrop"
+                    android:layout_weight="1"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_gravity="bottom|center"
+                android:layout_marginBottom="15dp">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/my_vh_pic3"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/default_profile"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="@android:color/white"/>
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/my_vh_pic4"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/default_profile"
+                    android:scaleType="centerCrop"
+                    android:layout_marginStart="15dp"
+                    android:visibility="gone"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="@android:color/white"/>
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/my_vh_pic5"
+                    android:layout_width="50dp"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/default_profile"
+                    android:scaleType="centerCrop"
+                    android:layout_marginStart="15dp"
+                    android:visibility="gone"
+                    app:civ_border_width="3dp"
+                    app:civ_border_color="@android:color/white"/>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/my_vh_names"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/my_vh_theme"
+            android:text="Going to have a delicious fucking meal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:textSize="25sp"
+            android:textColor="@color/thread_title"/>
+
+        <Button
+            android:id="@+id/my_vh_leave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/leave"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="5dp"
+            android:textColor="@color/registerColor"
+            style="?android:attr/borderlessButtonStyle"/>
+
+    </LinearLayout>
+
+</android.support.v7.widget.CardView>

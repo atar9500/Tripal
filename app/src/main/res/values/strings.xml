@@ -1,0 +1,154 @@
+<resources>
+    <string name="app_name">Tripal</string>
+
+    <string name="title_activity_main">MainActivity</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="permission_location_rationale">Tripal will need access to your Location in order to locate users nearby you.</string>
+    <string name="permission_external_rationale">Tripal will need access to your storage in order to let you choose a photo from the gallery.</string>
+    <string name="permission_camera_rationale">Tripal will need access to your camera in order to let you choose a take a photo.</string>
+
+    <string name="bar">Bar</string>
+    <string name="atm">ATM</string>
+    <string name="cafe">Cafe</string>
+    <string name="liquor_store">Liquor Store</string>
+    <string name="restaurant">Restaurant</string>
+    <string name="city_hall">City Hall</string>
+    <string name="library">Library</string>
+    <string name="night_club">Nightclub</string>
+    <string name="shopping_mall">Mall</string>
+    <string name="store">Store</string>
+    <string name="park">Park</string>
+
+    <string name="bars">Bars</string>
+    <string name="cafes">Cafes</string>
+    <string name="restaurants">Restaurants</string>
+    <string name="libraries">Libraries</string>
+    <string name="night_clubs">Nightclubs</string>
+    <string name="shopping_malls">Malls</string>
+    <string name="stores">Stores</string>
+    <string name="parks">Parks</string>
+
+    <string name="left_message">left&#8230;</string>
+    <string name="joined_message">joined!</string>
+    <string name="join_message">wants to join in.</string>
+
+    <string name="going_to">Going to</string>
+
+    <string name="you_are_in">You are in!</string>
+    <string name="leave">Leave hangout</string>
+
+    <string name="join">Join!</string>
+    <string name="request_sent">Request Sent</string>
+    <string name="and">and</string>
+    <string name="hangout_ended">Hangout ended</string>
+
+    <string name="register">Register</string>
+    <string name="dont_have_account">Don\'t have an account?</string>
+    <string name="sign_up">Sign up</string>
+    <string name="sign_in">Sign In</string>
+    <string name="forgot_pass">Forgot password?</string>
+    <string name="email_hint">example@tripal.com</string>
+    <string name="pass_hint">abcd1234</string>
+    <string name="name_hint">John Doe</string>
+    <string name="email_field">Email</string>
+    <string name="name_field">Name</string>
+    <string name="pass_field">Password</string>
+    <string name="repass_field">Confirm Password</string>
+    <string name="create_an_account">Continue</string>
+    <string name="reset_password">Reset Password</string>
+    <string name="reset">Reset</string>
+    <string name="sign_in_google">Sign in with google</string>
+    <string name="changed_place_to">changed place to</string>
+    <string name="you_joined">You joined!</string>
+    <string name="joined">joined!</string>
+    <string name="left_the_hangout">left the hangout</string>
+    <string name="you_changed_the_place_to">You changed the place to</string>
+    <string name="changed_the_place_to">changed the place to</string>
+    <string name="accept">Accept</string>
+    <string name="set_place">set place</string>
+    <string name="nearby_you">Nearby you&#8230;</string>
+    <string name="i_want_to">I want to&#8230;</string>
+    <string name="new_hangout_hint">Grab a beer, wander around, &#8230;</string>
+    <string name="set_a_place">set a place</string>
+    <string name="please_hold_on">Please hold on&#8230;</string>
+    <string name="invalid_email">Invalid email address</string>
+    <string name="incorrect_sign">Username or password are incorrect</string>
+    <string name="could_not_connect">Could not connect, please check your internet connection</string>
+    <string name="user_not_exist">User does not exist</string>
+    <string name="friends_in_hangout">Friends in this hangout</string>
+    <string name="requests_in_hangout">Requests to join</string>
+    <string name="joined_the_hangout">joined the hangout</string>
+    <string name="already_in_hangout">is already in the hangout!</string>
+    <string name="hangout_full">Hangout is full already, try again later</string>
+    <string name="hangout_not_found">Something went wrong, try again later&#8230;</string>
+    <string name="hangout_not_active">Seems like this hangout is not active anymore :(</string>
+    <string name="hangout_already_there">is already in the hangout!</string>
+    <string name="no_connection">Something went wrong, please check your internet connection</string>
+    <string name="went_wrong">Something went wrong, please try again later</string>
+    <string name="please_confirm">Please confirm the email that sent to you in order to login</string>
+    <string name="already_left">You already left the hangout</string>
+    <string name="no_hangouts_yet">No hangouts yet&#8230;</string>
+    <string name="start_hanging">Start hanging out with users around you :)</string>
+    <string name="past_hangouts">Past Hangouts</string>
+    <string name="empty_past_hangouts">You didn\'t participated in any hangout yet&#8230;</string>
+    <string name="active_hangouts">Active hangouts</string>
+    <string name="error_loading_image">Error loading image :(</string>
+    <string name="no_photos_available">No photos available :(</string>
+    <string name="email_verification">An Email verification send to you, please verify your email</string>
+    <string name="email_pass_reset">An email sent with the instructions to reset your password</string>
+    <string name="welcome_to_tripal">Welcome to Tripal</string>
+    <string name="before_you_continue">Before you continue please tell us something about yourself :)</string>
+
+    <string name="you_are_offline">You are offline</string>
+    <string name="go_online">Go online to see who\'s around you :)</string>
+    <string name="offline">Offline&#8230;</string>
+    <string name="available">Available!</string>
+
+    <string name="no_hangouts_around">No hangouts around&#8230;</string>
+    <string name="setup_hangout">Setup a hangout by pressing the button below :)</string>
+
+    <string name="we_are_sorry">We are sorry about this :(</string>
+    <string name="no_results_found">No results found</string>
+
+    <string name="about_me">About Me</string>
+    <string name="origin">Origin</string>
+    <string name="interests">Interests</string>
+    <string name="movies_books_music">Music, Movies &amp; Books</string>
+    <string name="countries_been">Countries I\'ve been</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="change_pic">Change profile photo</string>
+    <string name="birthday">Birthday</string>
+    <string name="gender">Gender</string>
+
+    <string name="about_hint">Tell us something about yourself :)</string>
+    <string name="interests_hint">Write down your interests in general&#8230;</string>
+    <string name="movies_hint">Share with us your favorite records, movies, books and more&#8230;</string>
+    <string name="been_hint">List here the countries you\'ve already been</string>
+    <string name="origin_hint">Where are you from?</string>
+    <string name="required">* Required</string>
+    <string name="pass_not_match">Passwords does not match each other</string>
+    <string name="user_exists">User already exists</string>
+    <string name="fields_missing">Some fields are missing</string>
+    <string name="never_show_email">We will NEVER show your email address to anyone</string>
+    <string name="travellers_would_know">So travellers would know you better</string>
+    <string name="personal_info">Personal Information</string>
+    <string name="sign_in_details">Sign In Details</string>
+    <string name="change_profile_pic">Change Profile Picture</string>
+    <string name="choose_from_gallery">Choose from gallery</string>
+    <string name="take_a_pic">Take a photo</string>
+    <string name="delete_pic">Delete photo</string>
+
+    <string name="whos_around">Who\'s around me?</string>
+    <string name="my_hangouts">My hangouts</string>
+
+    <string name="email_users">Email users</string>
+
+    <bool name="is_tablet">false</bool>
+
+    <string-array name="genders">
+        <item>Male</item>
+        <item>Female</item>
+    </string-array>
+
+</resources>

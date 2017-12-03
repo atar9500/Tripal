@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1049072255332",
+    "firebase_url": "https://tripal-6de8a.firebaseio.com",
+    "project_id": "tripal-6de8a",
+    "storage_bucket": "tripal-6de8a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1049072255332:android:d8df47827af784a9",
+        "android_client_info": {
+          "package_name": "com.atar.tripal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1049072255332-4nkie0s93kcvs147lsk693iqc0tb3qcj.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.atar.tripal",
+            "certificate_hash": "20eb0a1e8850dcd7a2c982c5b7abbebf759b1941"
+          }
+        },
+        {
+          "client_id": "1049072255332-ksabl98v72ga6p6hisvpcp3qfl0fdo3u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA8C9FiNQw1LTNbVxnKkUhs-AxOrWAERqM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1049072255332-ksabl98v72ga6p6hisvpcp3qfl0fdo3u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

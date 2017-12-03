@@ -1,0 +1,94 @@
+<android.support.design.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <fragment
+        android:id="@+id/map_map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context="com.atar.tripal.ui.MapFragment"/>
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/map_search_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="8dp"
+        app:cardPreventCornerOverlap="true"
+        app:cardElevation="2dp"
+        app:cardBackgroundColor="@color/field_color"
+        app:cardCornerRadius="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <android.support.v7.widget.SearchView
+                    android:id="@+id/map_search"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:queryBackground="@android:color/transparent"
+                    app:queryHint="Set a meetup"
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@android:color/transparent"/>
+
+                <ProgressBar
+                    android:id="@+id/map_loading_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:scaleX="0.6"
+                    android:scaleY="0.6"
+                    android:visibility="gone"/>
+
+            </LinearLayout>
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/map_suggestions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:overScrollMode="never"
+                android:scrollbars="none"/>
+
+            <ProgressBar
+                android:id="@+id/map_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:visibility="gone"/>
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:background="@drawable/shadow"
+        app:layout_anchor="@id/nearby_sheet"/>
+
+    <include layout="@layout/nearby_sheet"/>
+
+    <View
+        android:id="@+id/map_place_shadow"
+        android:layout_width="match_parent"
+        android:layout_height="16dp"
+        android:background="@drawable/shadow"
+        app:layout_anchor="@id/hangout_sheet"
+        android:visibility="invisible"/>
+
+    <include layout="@layout/place_sheet"/>
+
+</android.support.design.widget.CoordinatorLayout>

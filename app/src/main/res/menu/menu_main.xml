@@ -1,0 +1,15 @@
+<menu
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/main_toolbar_switch"
+        android:title=""
+        android:actionLayout="@layout/location_switcher"
+        app:showAsAction="always"/>
+
+    <item
+        android:id="@+id/main_toolbar_setting"
+        android:title="Settings"/>
+
+</menu>
