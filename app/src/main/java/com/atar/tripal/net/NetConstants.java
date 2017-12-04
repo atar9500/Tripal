@@ -15,7 +15,7 @@ public class NetConstants {
 
     public final static String HOST_NAME = "http://*******:8080/chitchat/api/users/";
 
-    public final static String SECOND_API = "YOUR GOOGLE MAPS API KEY";
+    public final static String SECOND_API = "YOUR GOOGLE MAPS API KEY!";
 
     public final static String BARS = "bar";
     public final static String CAFES = "cafe";
