@@ -51,6 +51,7 @@ public class GettingMessageService extends FirebaseMessagingService {
         broadcastIntent.putExtra(DBConstants.COL_ID, message.getId());
         broadcastIntent.putExtra(DBConstants.COL_TYPE, message.getType());
         broadcastIntent.putExtra(DBConstants.COL_HANGOUT_ID, message.getHangoutId());
+        broadcastIntent.putExtra(DBConstants.DB_NAME, message.getSenderName());
         LocalBroadcastManager.getInstance(this).sendBroadcast(broadcastIntent);
     }
 

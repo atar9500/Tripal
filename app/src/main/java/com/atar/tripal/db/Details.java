@@ -123,6 +123,6 @@ public class Details {
 
     public static String getPhotoPath(Context context){
         SharedPreferences settingsFile = context.getSharedPreferences(PROFILE, Context.MODE_PRIVATE);
-        return settingsFile.getString(PHOTO_PATH, null);
+        return settingsFile.getString(PHOTO_PATH, "");
     }
 }

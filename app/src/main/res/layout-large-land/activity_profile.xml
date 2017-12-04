@@ -13,60 +13,77 @@
     <android.support.design.widget.AppBarLayout
         android:id="@+id/pf_app_bar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="300dp"
         android:fitsSystemWindows="true"
         android:theme="@style/AppTheme.AppBarOverlay">
 
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/pf_toolbar"
+        <android.support.design.widget.CollapsingToolbarLayout
             android:layout_width="match_parent"
-            android:minHeight="?attr/actionBarSize"
-            android:layout_height="wrap_content"/>
-
-    </android.support.design.widget.AppBarLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        <FrameLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_height="wrap_content"
+            android:fitsSystemWindows="true"
+            app:contentScrim="?attr/colorPrimary"
+            app:titleEnabled="false"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
             <ImageView
                 android:id="@+id/pf_pic"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="300dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/default_profile"/>
+                android:src="@drawable/default_profile"
+                app:layout_collapseMode="parallax"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"/>
 
-            <ProgressBar
-                android:id="@+id/pf_load_pic"
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/pf_change_photo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="invisible"
-                android:minWidth="80dp"
-                android:minHeight="80dp"/>
+                android:src="@mipmap/camera_small"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="20dp"
+                android:cropToPadding="true"
+                app:layout_collapseMode="parallax"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                app:civ_circle_background_color="@color/info_message"/>
 
-        </FrameLayout>
-
-        <android.support.v4.widget.NestedScrollView
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1.5"
-            tools:context="com.atar.tripal.ui.ProfileActivity"
-            tools:showIn="@layout/activity_profile">
-
-            <FrameLayout
-                android:id="@+id/pf_container"
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/pf_toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="?attr/actionBarSize"
+                app:layout_collapseMode="pin"
+                app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
-        </android.support.v4.widget.NestedScrollView>
+        </android.support.design.widget.CollapsingToolbarLayout>
+    </android.support.design.widget.AppBarLayout>
+
+    <include layout="@layout/content_profile" />
+
+    <LinearLayout
+        android:id="@+id/pf_loading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:elevation="10dp"
+        android:visibility="invisible">
+
+        <com.github.ybq.android.spinkit.SpinKitView
+            style="@style/SpinKitView.CubeGrid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:SpinKit_Color="@color/colorAccent"
+            android:minWidth="100dp"
+            android:minHeight="100dp"/>
+
+        <TextView
+            android:text="@string/please_hold_on"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:layout_margin="10dp"
+            android:textColor="@android:color/white"/>
 
     </LinearLayout>
 
@@ -75,34 +92,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="25dp"
-        android:layout_gravity="bottom|end"
+        android:layout_gravity="end|bottom"
         app:fabSize="normal"
         app:srcCompat="@mipmap/profile_edit"/>
-
-    <LinearLayout
-        android:id="@+id/pf_loading"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:layout_gravity="center"
-        android:background="@android:color/white"
-        android:gravity="center"
-        android:elevation="10dp"
-        android:visibility="invisible">
-
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minWidth="100dp"
-            android:minHeight="100dp"/>
-
-        <TextView
-            android:text="@string/please_hold_on"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="25sp"
-            android:layout_margin="10dp"/>
-
-    </LinearLayout>
 
 </android.support.design.widget.CoordinatorLayout>

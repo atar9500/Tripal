@@ -128,6 +128,7 @@ public class LocationDetectorService extends Service {
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                         Log.i(TAG, "All location settings are satisfied.");
                         try{
+                            Details.saveStatus(LocationDetectorService.this, true);
                             mFusedLocationProviderClient.requestLocationUpdates(mLocationRequest,
                                     mLocationCallback, Looper.myLooper());
                             Intent broadcastIntent = new Intent(BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE);
@@ -169,11 +170,11 @@ public class LocationDetectorService extends Service {
      * Removes location updates from the FusedLocationApi.
      */
     private void stopLocationUpdates() {
-        Details.saveStatus(LocationDetectorService.this, false);
         mFusedLocationProviderClient.removeLocationUpdates(mLocationCallback)
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
                     @Override
                     public void onComplete(@NonNull Task<Void> task) {
+                        Details.saveStatus(LocationDetectorService.this, false);
                         Intent broadcastIntent = new Intent
                                 (BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE);
                         broadcastIntent.putExtra(CODE, END);

@@ -13,7 +13,7 @@
     <android.support.design.widget.AppBarLayout
         android:id="@+id/pf_app_bar"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="350dp"
         android:fitsSystemWindows="true"
         android:theme="@style/AppTheme.AppBarOverlay">
 
@@ -28,42 +28,35 @@
             <ImageView
                 android:id="@+id/pf_pic"
                 android:layout_width="match_parent"
-                android:layout_height="400dp"
+                android:layout_height="350dp"
                 android:scaleType="centerCrop"
                 android:src="@drawable/default_profile"
                 app:layout_collapseMode="parallax"
                 app:layout_scrollFlags="scroll|exitUntilCollapsed"/>
 
-            <ProgressBar
-                android:id="@+id/pf_load_pic"
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/pf_change_photo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:visibility="invisible"
-                android:minHeight="80dp"
-                android:minWidth="80dp"/>
+                android:src="@mipmap/camera_small"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="20dp"
+                android:cropToPadding="true"
+                app:layout_collapseMode="parallax"
+                app:layout_scrollFlags="scroll|exitUntilCollapsed"
+                app:civ_circle_background_color="@color/info_message"/>
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/pf_toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
-                app:popupTheme="@style/AppTheme.PopupOverlay" />
+                app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_profile" />
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/pf_edit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="25dp"
-        app:fabSize="normal"
-        app:layout_anchor="@id/pf_app_bar"
-        app:layout_anchorGravity="bottom|end"
-        app:srcCompat="@mipmap/profile_edit"/>
 
     <LinearLayout
         android:id="@+id/pf_loading"
@@ -71,24 +64,36 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:layout_gravity="center"
-        android:background="@android:color/white"
+        android:background="@color/colorPrimary"
         android:gravity="center"
         android:elevation="10dp"
-        android:visibility="gone">
+        android:visibility="invisible">
 
-        <ProgressBar
+        <com.github.ybq.android.spinkit.SpinKitView
+            style="@style/SpinKitView.CubeGrid"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minHeight="100dp"
-            android:minWidth="100dp"/>
+            app:SpinKit_Color="@color/colorAccent"
+            android:minWidth="100dp"
+            android:minHeight="100dp"/>
 
         <TextView
             android:text="@string/please_hold_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="25sp"
-            android:layout_margin="10dp"/>
+            android:textSize="22sp"
+            android:layout_margin="10dp"
+            android:textColor="@android:color/white"/>
 
     </LinearLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/pf_edit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="25dp"
+        android:layout_gravity="end|bottom"
+        app:fabSize="normal"
+        app:srcCompat="@mipmap/profile_edit"/>
 
 </android.support.design.widget.CoordinatorLayout>

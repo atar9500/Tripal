@@ -50,9 +50,9 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.3.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
     implementation 'me.relex:circleindicator:1.2.2@aar'
-    implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation 'com.github.yalantis:ucrop:2.2.1'
     implementation 'com.github.ybq:Android-SpinKit:1.1.0'
+    implementation 'com.squareup.picasso:picasso:2.5.2'
     testCompile 'junit:junit:4.12'
 }
 

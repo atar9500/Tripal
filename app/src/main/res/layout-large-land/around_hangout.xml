@@ -39,8 +39,7 @@
                     android:layout_height="match_parent"
                     android:src="@drawable/default_profile"
                     android:scaleType="centerCrop"
-                    android:layout_weight="1"
-                    android:visibility="gone"/>
+                    android:layout_weight="1"/>
 
             </LinearLayout>
 
@@ -57,7 +56,6 @@
                     android:layout_height="match_parent"
                     android:src="@drawable/default_profile"
                     android:scaleType="centerCrop"
-                    android:visibility="gone"
                     app:civ_border_width="3dp"
                     app:civ_border_color="@android:color/white"/>
 
@@ -68,7 +66,6 @@
                     android:src="@drawable/default_profile"
                     android:scaleType="centerCrop"
                     android:layout_marginStart="40dp"
-                    android:visibility="gone"
                     app:civ_border_width="3dp"
                     app:civ_border_color="@android:color/white"/>
 
@@ -79,7 +76,6 @@
                     android:src="@drawable/default_profile"
                     android:scaleType="centerCrop"
                     android:layout_marginStart="40dp"
-                    android:visibility="gone"
                     app:civ_border_width="3dp"
                     app:civ_border_color="@android:color/white"/>
 

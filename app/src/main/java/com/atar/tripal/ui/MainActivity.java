@@ -51,6 +51,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.rengwuxian.materialedittext.MaterialEditText;
 import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -148,19 +149,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String path = Details.getPhotoPath(this);
-        if(path != null){
-            Picasso.with(this).load(new File(path)).memoryPolicy(MemoryPolicy.NO_CACHE)
-                    .memoryPolicy(MemoryPolicy.NO_STORE)
-                    .resize(150, 150)
-                    .into(mProfilePic, new com.squareup.picasso.Callback() {
-                @Override
-                public void onSuccess() {}
-                @Override
-                public void onError() {
-                    Details.savePhotoPath(null, MainActivity.this);
-                    getProfilePhoto();
-                }
-            });
+        File file = new File(path);
+        if(file.exists()){
+            Picasso.with(this).load(file).memoryPolicy(MemoryPolicy.NO_CACHE).into(mProfilePic);
         } else {
             getProfilePhoto();
         }
@@ -289,7 +280,11 @@ public class MainActivity extends AppCompatActivity {
     private void initUIWidgets(){
         setSupportActionBar((Toolbar) findViewById(R.id.ma_toolbar));
         if(getSupportActionBar() != null){
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            if(Details.getStatus(this)){
+                getSupportActionBar().setTitle(R.string.available);
+            } else {
+                getSupportActionBar().setTitle(R.string.offline);
+            }
         }
 
         mFragmentsAdapter = new MainTabsAdapter(getSupportFragmentManager(), this);

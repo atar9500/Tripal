@@ -58,17 +58,12 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
             String result = intent.getStringExtra(NetConstants.RESULT);
             if(!result.equals(NetConstants.RESULT_FULL)){
                 final long hangoutId = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        for(int i = 0; i < mActiveHangouts.size(); i++){
-                            if(mActiveHangouts.get(i).getId() == hangoutId){
-                                refreshHangout(i, hangoutId);
-                                break;
-                            }
-                        }
+                for(int i = 0; i < mActiveHangouts.size(); i++){
+                    if(mActiveHangouts.get(i).getId() == hangoutId){
+                        refreshHangout(i, hangoutId);
+                        break;
                     }
-                });
+                }
             }
         }
     }
@@ -78,7 +73,10 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
         public void onReceive(Context context, Intent intent) {
             if(intent != null){
                 int typeOfMessage = intent.getIntExtra(DBConstants.COL_TYPE, -1);
-                if(typeOfMessage == Message.TYPE_JOINED || typeOfMessage == Message.TYPE_LEFT){
+                String username = intent.getStringExtra(DBConstants.DB_NAME);
+                if(typeOfMessage == Message.TYPE_JOINED && username.equals(Details.getUsername(getContext()))){
+                    getMyHangouts();
+                } else if(typeOfMessage == Message.TYPE_JOINED || typeOfMessage == Message.TYPE_LEFT){
                     final long hangoutId = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
                     new Thread(new Runnable() {
                         @Override
@@ -90,7 +88,7 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
                                 }
                             }
                         }
-                    });
+                    }).run();
                 }
 
             }
@@ -145,6 +143,10 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
 
         arrangeMessages();
 
+        if(savedInstanceState == null){
+            getMyHangouts();
+        }
+
         return mView;
     }
 
@@ -156,7 +158,6 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
 
     @Override
     public void onStart() {
-        getMyHangouts();
         if(getContext() != null){
             mHangoutUpdaterReceiver = new HangoutUpdater();
             LocalBroadcastManager.getInstance(getContext()).registerReceiver
@@ -232,10 +233,12 @@ public class MyHangoutsFragment extends Fragment implements MyHangoutCallback {
                 } else {
                     Toast.makeText(getContext(), R.string.went_wrong, Toast.LENGTH_SHORT).show();
                 }
+                arrangeMessages();
             }
 
             @Override
             public void onFailure(@NonNull Call<Result> call, @NonNull Throwable t) {
+                arrangeMessages();
                 Toast.makeText(getContext(), R.string.no_connection, Toast.LENGTH_SHORT).show();
             }
         });

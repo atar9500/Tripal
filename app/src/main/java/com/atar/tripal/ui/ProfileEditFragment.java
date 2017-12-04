@@ -82,6 +82,7 @@ public class ProfileEditFragment extends Fragment {
 
     private void initUIWidgets(){
         mDate = mView.findViewById(R.id.pe_date);
+        mDate.setText(mUser.getBirthDate());
         mDate.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -135,9 +136,7 @@ public class ProfileEditFragment extends Fragment {
                                 .build(getActivity());
                         startActivityForResult(intent, PLACE_AUTOCOMPLETE_REQUEST_CODE);
                     }
-                } catch (GooglePlayServicesRepairableException e) {
-                    e.printStackTrace();
-                } catch (GooglePlayServicesNotAvailableException e) {
+                } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
                     e.printStackTrace();
                 }
             }

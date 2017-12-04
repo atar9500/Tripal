@@ -306,6 +306,9 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
     }
 
     private void initUIWidgets(){
+
+        findViewById(R.id.la_background).setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
         mContainer = findViewById(R.id.la_container);
         mLoadingScreen = findViewById(R.id.la_loading);
 
@@ -351,7 +354,7 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
         }
     }
 
-    private void registerUser(User user){
+    private void registerUser(final User user){
         Call<Result> call = mInterface.registerUser(user);
         call.enqueue(new Callback<Result>() {
             @Override
@@ -361,6 +364,7 @@ public class LoginActivity extends AppCompatActivity implements LoginListener {
                 if(response.isSuccessful() && result!= null){
                     switch(result.getResult()){
                         case NetConstants.RESULT_SUCCESS:
+                            Details.saveProfile(user, LoginActivity.this);
                             getSupportFragmentManager().beginTransaction()
                                     .replace(R.id.la_container, mLogInFragment, LOG_IN_FRAGMENT).commit();
                             onAfterValidate();

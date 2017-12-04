@@ -26,10 +26,12 @@ import android.widget.Toast;
 import com.atar.tripal.R;
 import com.atar.tripal.adapters.AroundHangoutsAdapter;
 import com.atar.tripal.callbacks.AroundCallback;
+import com.atar.tripal.db.DBConstants;
 import com.atar.tripal.db.DBHandler;
 import com.atar.tripal.db.Details;
 import com.atar.tripal.net.ApiClient;
 import com.atar.tripal.net.ApiInterface;
+import com.atar.tripal.net.GettingMessageService;
 import com.atar.tripal.net.LocationDetectorService;
 import com.atar.tripal.net.NetConstants;
 import com.atar.tripal.objects.Hangouts;
@@ -73,8 +75,33 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
         }
     }
 
+    private class RequestsUpdateReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int type = intent.getIntExtra(DBConstants.COL_TYPE, -1);
+            String name = intent.getStringExtra(DBConstants.DB_NAME);
+            final long hangoutId = intent.getLongExtra(DBConstants.COL_HANGOUT_ID, -1);
+            if(type == Message.TYPE_JOINED && name.equals(Details.getUsername(getContext()))){
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for(int i = 0; i < mHangouts.size(); i++){
+                            if(mHangouts.get(i).getId() == hangoutId){
+                                mHangouts.remove(i);
+                                mAdapter.notifyItemRemoved(i);
+                                showOrHideMessage();
+                            }
+                        }
+                    }
+                }).run();
+            }
+        }
+    }
+
     private View mView;
 
+    private RequestsUpdateReceiver mRequestsReceiver;
     private LocationUpdateReceiver mReceiver;
     private ApiInterface mInterface;
 
@@ -111,6 +138,8 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
 
         initUIWidgets();
 
+        showOrHideMessage();
+
         return mView;
     }
 
@@ -120,6 +149,9 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
             mReceiver = new LocationUpdateReceiver();
             LocalBroadcastManager.getInstance(getContext()).registerReceiver
                     (mReceiver, new IntentFilter(LocationDetectorService.BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
+            mRequestsReceiver = new RequestsUpdateReceiver();
+            LocalBroadcastManager.getInstance(getContext()).registerReceiver
+                    (mRequestsReceiver, new IntentFilter(GettingMessageService.BROADCAST_IDENTIFIER_FOR_SERVICE_FINISHED_RESPONSE));
         }
         super.onStart();
     }
@@ -128,6 +160,7 @@ public class HangoutsAroundFragment extends Fragment implements AroundCallback {
     public void onStop() {
         if(getContext() != null){
             LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mReceiver);
+            LocalBroadcastManager.getInstance(getContext()).unregisterReceiver(mRequestsReceiver);
         }
         super.onStop();
     }

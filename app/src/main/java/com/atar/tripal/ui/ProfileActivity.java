@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.BaseTransientBottomBar;
 import android.support.design.widget.BottomSheetDialog;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -20,13 +21,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.atar.tripal.BuildConfig;
@@ -44,6 +42,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.MemoryPolicy;
+import com.squareup.picasso.NetworkPolicy;
 import com.squareup.picasso.Picasso;
 import com.yalantis.ucrop.UCrop;
 
@@ -100,7 +99,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
     private FloatingActionButton mEditOrSave;
     private ImageView mProfilePic;
     private LinearLayout mLoading;
-    private ProgressBar mLoadingPic;
 
     /**
      * Fragments
@@ -232,7 +230,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
                             StorageReference storageRef = FirebaseStorage.getInstance().getReference();
                             mProfilePhotosRef = storageRef.child("users/" + Details
                                     .getProfileId(this) + "/profilePicture.jpg");
-                            showLoadingPhoto();
                             UploadTask task = mProfilePhotosRef.putStream(stream);
                             addListenersToUploadTask(task);
                         } catch (FileNotFoundException e) {
@@ -241,13 +238,13 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
                     }
                 }
             }
-        } else if(data == null){
-            Toast.makeText(this, R.string.went_wrong, Toast.LENGTH_SHORT).show();
         } else if(resultCode == UCrop.RESULT_ERROR) {
             Throwable t = UCrop.getError(data);
             if(t != null){
                 t.printStackTrace();
             }
+        } else if(resultCode != RESULT_CANCELED){
+            Toast.makeText(this, R.string.went_wrong, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -306,23 +303,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.profile_menu, menu);
-        menu.findItem(R.id.pm_change_pic).setVisible(mCode != FRIEND_CODE);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
-            case R.id.pm_change_pic:
-                showChangePhotoDialog();
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt(CODE, mCode);
@@ -351,7 +331,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
         List<UploadTask> tasks = mProfilePhotosRef.getActiveUploadTasks();
         if (tasks.size() > 0) {
             mPhotoPath = savedInstanceState.getString("photoPath");
-            showLoadingPhoto();
             UploadTask task = tasks.get(0);
             addListenersToUploadTask(task);
         }
@@ -473,32 +452,102 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
             mEditOrSave.setVisibility(View.GONE);
         }
 
-        mLoadingPic = findViewById(R.id.pf_load_pic);
         mProfilePic = findViewById(R.id.pf_pic);
-        if(mCode != FRIEND_CODE){
-            String path = Details.getPhotoPath(this);
-            showLoadingPhoto();
-            if(path != null){
-                Picasso.with(this).load(new File(path))
-                        .memoryPolicy(MemoryPolicy.NO_CACHE)
-                        .into(mProfilePic, new com.squareup.picasso.Callback() {
-                            @Override
-                            public void onSuccess() {
-                                hideLoadingPhoto();
-                            }
 
-                            @Override
-                            public void onError() {
-                                Details.savePhotoPath(null, ProfileActivity.this);
-                                getProfilePhoto();
-                            }
-                        });
-            } else {
+
+        switch(mCode){
+            case SIGN_UP_GOOGLE_CODE:
+                if(mPhotoPath != null){
+                    File file = new File(Details.getPhotoPath(this));
+                    if(file.exists()){
+                        Picasso.with(this).load(file).into(mProfilePic);
+                    }
+                }
+                break;
+            case PROFILE_CODE:
+                if(mPhotoPath != null){
+                    File file = new File(Details.getPhotoPath(this));
+                    if(file.exists()){
+                        Picasso.with(this).load(file).into(mProfilePic);
+                    } else {
+                        getProfilePhoto();
+                    }
+                }
+                break;
+            case FRIEND_CODE:
                 getProfilePhoto();
-            }
-        } else {
-            getProfilePhoto();
+                break;
         }
+
+        ImageView changePhoto = findViewById(R.id.pf_change_photo);
+        if(Details.getProfileId(this).equals(mUser.getId())){
+            changePhoto.setVisibility(View.VISIBLE);
+            changePhoto.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    showChangePhotoDialog();
+                }
+            });
+        } else {
+            changePhoto.setVisibility(View.GONE);
+            changePhoto.setOnClickListener(null);
+        }
+    }
+
+    private void showChangePhotoDialog(){
+        final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View sheetView = getLayoutInflater().inflate(R.layout.image_dialog, null);
+        bottomSheetDialog.setContentView(sheetView);
+        bottomSheetDialog.show();
+        LinearLayout gallery = sheetView.findViewById(R.id.mgd_gallery);
+        gallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changePhotoFromGallery();
+                bottomSheetDialog.dismiss();
+            }
+        });
+        LinearLayout camera = sheetView.findViewById(R.id.mgd_camera);
+        camera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                changePhotoFromCamera();
+                bottomSheetDialog.dismiss();
+            }
+        });
+        LinearLayout delete = sheetView.findViewById(R.id.mgd_delete);
+        delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                deletePhoto();
+                bottomSheetDialog.dismiss();
+            }
+        });
+    }
+
+    public void changePhotoFromGallery() {
+        if(!checkPermissionExternal()){
+            requestPermissionExternal();
+        } else {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, CHANGE_PHOTO_FROM_GALLERY);
+        }
+    }
+
+    public void changePhotoFromCamera() {
+        if(!checkPermissionCamera()){
+            requestPermissionCamera();
+        } else if(!checkPermissionExternal()){
+            requestPermissionExternal();
+        } else {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(intent, CHANGE_PHOTO_FROM_CAMERA);
+        }
+    }
+
+    public void deletePhoto() {
+
     }
 
     private Fragment getCurrentFragment(){
@@ -513,71 +562,6 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
     private void stopProgress(){
         mLoading.setAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_out));
         mLoading.setVisibility(View.INVISIBLE);
-    }
-
-    private void showChangePhotoDialog(){
-        final BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-        View sheetView = getLayoutInflater().inflate(R.layout.image_dialog, null);
-        bottomSheetDialog.setContentView(sheetView);
-        bottomSheetDialog.show();
-        LinearLayout gallery = sheetView.findViewById(R.id.mgd_gallery);
-        gallery.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!checkPermissionExternal()){
-                    requestPermissionExternal();
-                } else {
-                    Intent intent = new Intent(Intent.ACTION_PICK);
-                    intent.setType("image/*");
-                    startActivityForResult(intent, CHANGE_PHOTO_FROM_GALLERY);
-                }
-                bottomSheetDialog.dismiss();
-            }
-        });
-        LinearLayout camera = sheetView.findViewById(R.id.mgd_camera);
-        camera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(!checkPermissionCamera()){
-                    requestPermissionCamera();
-                } else if(!checkPermissionExternal()){
-                    requestPermissionExternal();
-                } else {
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent, CHANGE_PHOTO_FROM_CAMERA);
-                }
-                bottomSheetDialog.dismiss();
-            }
-        });
-        LinearLayout delete = sheetView.findViewById(R.id.mgd_delete);
-        delete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                bottomSheetDialog.dismiss();
-            }
-        });
-    }
-
-    private void showLoadingPhoto(){
-        if(mProfilePic.isShown()){
-            mProfilePic.setAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_out));
-            mProfilePic.setVisibility(View.GONE);
-        }
-        if(!mLoadingPic.isShown()){
-            mLoadingPic.setAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
-            mLoadingPic.setVisibility(View.VISIBLE);
-        }
-    }
-
-    private void hideLoadingPhoto(){
-        if(mLoadingPic.isShown()){
-            mLoadingPic.setAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_out));
-            mLoadingPic.setVisibility(View.INVISIBLE);
-        }
-        if(!mProfilePic.isShown()){
-            mProfilePic.setAnimation(AnimationUtils.loadAnimation(this, R.anim.fade_in));
-            mProfilePic.setVisibility(View.VISIBLE);
-        }
     }
 
     private boolean checkPermissionExternal() {
@@ -615,17 +599,15 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
         task.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot state) {
-                hideLoadingPhoto();
                 Details.savePhotoPath(mPhotoPath, ProfileActivity.this);
-                Picasso.with(ProfileActivity.this).load(new File(mPhotoPath))
-                        .memoryPolicy(MemoryPolicy.NO_STORE)
+                Picasso.with(ProfileActivity.this)
+                        .load(new File(mPhotoPath))
                         .into(mProfilePic);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 e.printStackTrace();
-                hideLoadingPhoto();
                 Toast.makeText(ProfileActivity.this,
                         R.string.went_wrong, Toast.LENGTH_SHORT).show();
             }
@@ -679,24 +661,17 @@ public class ProfileActivity extends AppCompatActivity implements ProfileCallbac
         profilePhotosRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
-                Picasso.with(ProfileActivity.this).load(uri).memoryPolicy(MemoryPolicy.NO_CACHE)
+                Picasso.with(ProfileActivity.this)
+                        .load(uri)
                         .memoryPolicy(MemoryPolicy.NO_CACHE)
-                        .into(mProfilePic, new com.squareup.picasso.Callback() {
-                    @Override
-                    public void onSuccess() {
-                        hideLoadingPhoto();
-                    }
-
-                    @Override
-                    public void onError() {
-                        hideLoadingPhoto();
-                    }
-                });
+                        .networkPolicy(NetworkPolicy.NO_CACHE)
+                        .into(mProfilePic);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 e.printStackTrace();
+                Snackbar.make(findViewById(R.id.profile_activity), R.string.no_connection, BaseTransientBottomBar.LENGTH_LONG).show();
             }
         });
     }
